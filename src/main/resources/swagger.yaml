@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: SheCanCODE Attendance System API
+  description: >
+    API for managing students, tracking attendance,
+    and calculating stipends for SheCanCODE participants.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Student
+    description: student registration and management
+  - name: Attendance
+    description: Attendance tracking
+  - name: Stipend
+    description: Stipend calculation and payouts
+
+paths:
+
+  # ----------------------------
+  # Student Endpoints
+  # ----------------------------
+  /api/v1/students:
+    post:
+      tags:
+        - Student
+      summary: Register a new student
+      operationId: registerStudent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentCreateRequest'
+      responses:
+        '201':
+          description: Student successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '400':
+          description: Invalid request payload
+        '422':
+          description: Validation error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - jwt_auth: [ ]
+
+    get:
+      tags:
+        - Student
+      summary: Get all Students
+      operationId: getAllStudents
+      responses:
+        '200':
+          description: List of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentResponse'
+      security:
+        - jwt_auth: [ ]
+
+  /api/v1/students/{studentId}:
+    get:
+      tags:
+        - Student
+      summary: Get student by ID
+      operationId: getStudentById
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          description: unique identifier of the student
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Student found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '404':
+          description: Student not found
+        '401':
+          description: Unauthorized
+      security:
+        - jwt_auth: [ ]
+
+    patch:
+      tags:
+        - Student
+      summary: Deactivate student (dropout)
+      operationId: deactivateStudent
+      description: Mark student as INACTIVE (dropped out)
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Student deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '404':
+          description: Student not found
+        '401':
+          description: Unauthorized
+      security:
+        - jwt_auth: [ ]
+
+  # ----------------------------
+  # Attendance Endpoints
+  # ----------------------------
+  /api/v1/attendance:
+    post:
+      tags:
+        - Attendance
+      summary: Mark attendance
+      description: Records attendance for a student for a specific day.
+      operationId: markAttendance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendanceRequest'
+      responses:
+        '201':
+          description: Attendance recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceResponse'
+        '400':
+          description: Invalid request
+        '403':
+          description: Student is inactive (dropped out)
+        '404':
+          description: Student not found
+      security:
+        - jwt_auth: [ ]
+
+    get:
+      tags:
+        - Attendance
+      summary: Get attendance records
+      operationId: getAttendanceRecords
+      responses:
+        '200':
+          description: List of attendance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttendanceResponse'
+      security:
+        - jwt_auth: [ ]
+
+  # ----------------------------
+  # Stipend Endpoints
+  # ----------------------------
+  /api/v1/stipend/{studentId}:
+    get:
+      tags:
+        - Stipend
+      summary: Calculate stipend for a student
+      description: Calculates stipend based on attendance days.
+      operationId: calculateStipend
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stipend calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StipendResponse'
+        '404':
+          description: Student not found
+      security:
+        - jwt_auth: [ ]
+
+components:
+  securitySchemes:
+    jwt_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    StudentStatus:
+      type: string
+      enum: [ ACTIVE, INACTIVE ]
+
+    StudentCreateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: jane.doe@gmail.com
+        cohortId:
+          type: integer
+          example: 3
+      required:
+        - firstName
+        - lastName
+        - email
+        - cohortId
+
+    StudentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 101
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/StudentStatus'
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - status
+        - createdAt
+
+    AttendanceRequest:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        date:
+          type: string
+          format: date
+          example: 2026-01-01
+      required:
+        - studentId
+        - date
+
+    AttendanceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ PRESENT ]
+      required:
+        - id
+        - studentId
+        - date
+        - status
+
+    StipendResponse:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        daysPresent:
+          type: integer
+        stipendPerDay:
+          type: integer
+          example: 2500
+        totalStipend:
+          type: integer
+      required:
+        - studentId
+        - daysPresent
+        - stipendPerDay
+        - totalStipend
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Resource not found
+        timestamp:
+          type: string
+          format: date-time
