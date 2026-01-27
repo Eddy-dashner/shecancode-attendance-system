@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: shecancode-attendance-system
+
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: test
+    password: password
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+
+
