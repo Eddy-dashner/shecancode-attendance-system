@@ -1,18 +1,15 @@
-package com.shecancode.attendence.AttendenceMgt.dao;
+package com.shecancode.attendence.registration.dao;
 
-import com.shecancode.attendence.AttendenceMgt.Enum.Status;
+import com.shecancode.attendence.registration.Enum.Status;
 import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Builder
-@Data
-@Setter
-@Getter
-public class StudentRequestDao {
+public class StudentResponseDao {
+
+    private UUID studentId;
 
     private String student_FirstName;
 
@@ -30,5 +27,7 @@ public class StudentRequestDao {
 
     private String current_occupation;
 
-    private Date registration_period;
+    private Date startDate;
+
+    private Date graduationDate;
 }

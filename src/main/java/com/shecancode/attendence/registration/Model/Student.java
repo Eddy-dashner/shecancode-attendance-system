@@ -1,6 +1,6 @@
-package com.shecancode.attendence.AttendenceMgt.Model;
+package com.shecancode.attendence.registration.Model;
 
-import com.shecancode.attendence.AttendenceMgt.Enum.Status;
+import com.shecancode.attendence.registration.Enum.Status;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,10 +34,9 @@ public class Student {
     private int cohort_Id;
 
     private Status status;
+    private Date startDate;
 
-    private String current_occupation;
-
-    private Date registration_period;
+    private Date graduationDate;
 
     @Override
     public String toString() {
@@ -50,8 +49,8 @@ public class Student {
                 ", home_address=" + home_address +
                 ", cohort_Id=" + cohort_Id +
                 ", status=" + status +
-                ", current_occupation='" + current_occupation + '\'' +
-                ", registration_period=" + registration_period +
+                ", startDate=" + startDate +
+                ", graduationDate=" + graduationDate +
                 '}';
     }
 }

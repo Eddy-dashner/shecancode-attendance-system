@@ -1,10 +1,8 @@
-package com.shecancode.attendence.AttendenceMgt.Mapper;
+package com.shecancode.attendence.registration.Mapper;
 
-import com.shecancode.attendence.AttendenceMgt.Model.Student;
-import com.shecancode.attendence.AttendenceMgt.dao.StudentRequestDao;
-import com.shecancode.attendence.AttendenceMgt.dao.StudentResponseDao;
-
-import java.util.UUID;
+import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.dao.StudentRequestDao;
+import com.shecancode.attendence.registration.dao.StudentResponseDao;
 
 public class StudentMapper {
 
