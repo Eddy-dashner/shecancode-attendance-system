@@ -1,12 +1,13 @@
 package com.shecancode.attendence.registration.dao;
 
 import com.shecancode.attendence.registration.Enum.Status;
+import com.shecancode.attendence.registration.Model.Programs;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Builder
@@ -15,23 +16,21 @@ import java.util.UUID;
 @Getter
 public class StudentRequestDao {
 
-    private UUID studentId;
+    private String studentFirstName;
 
-    private String student_FirstName;
+    private String studentLastName;
 
-    private String student_Lastname;
-
-    private int phoneNumber;
+    private String phoneNumber;
 
     private String email;
 
-    private int home_address;
-
-    private int cohort_Id;
+    private String homeAddress;
 
     private Status status;
 
-    private Date startDate;
+    private String currentOccupation;
 
-    private Date graduationDate;
+    private String programName;
+
+    private UUID cohortId;
 }

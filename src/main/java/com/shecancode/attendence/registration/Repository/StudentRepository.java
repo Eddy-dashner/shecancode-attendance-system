@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface StudentRepository extends JpaRepository<Student, UUID> {
-    Optional<Object> existByEmail(String email);
+    boolean existsByEmail(String email);
 }

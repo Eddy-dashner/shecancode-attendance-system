@@ -1,47 +1,56 @@
 package com.shecancode.attendence.registration.Mapper;
 
+import com.shecancode.attendence.registration.Model.Cohort;
+import com.shecancode.attendence.registration.Model.Programs;
 import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
+import com.shecancode.attendence.registration.service.CohortService;
 
 public class StudentMapper {
-
     public static StudentResponseDao toDTO (Student student){
         if (student == null)
             return null;
 
         return  StudentResponseDao.builder()
                .studentId(student.getStudentId())
-                .student_FirstName(student.getStudent_FirstName())
-                .student_Lastname(student.getStudent_Lastname())
+                .studentFirstName(student.getStudentFirstName())
+                .studentLastName(student.getStudentLastName())
+                .phoneNumber(student.getPhoneNumber())
                 .email(student.getEmail())
-                .home_address(student.getHome_address())
+                .homeAddress(student.getHomeAddress())
+                .programName(student.getCohort().getProgram().getProgramName())
                 .status(student.getStatus())
-                .cohort_Id(student.getCohort_Id())
-                .current_occupation(student.getCurrent_occupation())
-                .registration_period(student.getRegistration_period())
+                .currentOccupation(student.getCurrentOccupation())
+                .programStartedDate(student.getCohort().getStartDate())
+                .estimateGraduationDate(student.getCohort().getEndDate())
+                .daysRemainingToGraduate(student.getDaysRemaining() != null ? student.getDaysRemaining() : 0)
                 .build();
     }
 
-    public static Student toModelStudent(StudentRequestDao requestDao){
+    public static Student toModelStudent(StudentRequestDao requestDao, Cohort existingCohort){
 
         if (requestDao == null) return null;
 
         Student student = new Student();
-        student.setStudent_FirstName(requestDao.getStudent_FirstName());
-        student.setStudent_Lastname(requestDao.getStudent_Lastname());
+        student.setStudentFirstName(requestDao.getStudentFirstName());
+        student.setStudentLastName(requestDao.getStudentLastName());
         student.setPhoneNumber(requestDao.getPhoneNumber());
         student.setEmail(requestDao.getEmail());
-        student.setHome_address(requestDao.getHome_address());
-        student.setCohort_Id(requestDao.getCohort_Id());
+        student.setHomeAddress(requestDao.getHomeAddress());
         student.setStatus(requestDao.getStatus());
-        student.setCurrent_occupation(requestDao.getCurrent_occupation());
+        student.setCohort(existingCohort); // Use the saved cohort with its cohortNumber
 
-        if (requestDao.getRegistration_period() != null){
-            student.setRegistration_period(requestDao.getRegistration_period());
-        }
+        student.setCurrentOccupation(requestDao.getCurrentOccupation());
+        student.setDaysRemaining(40);
+        student.setTotalProgramDays(50);
         return student;
 
+    }
+
+    // Overloaded method for backward compatibility
+    public static Student toModelStudent(StudentRequestDao requestDao){
+        return toModelStudent(requestDao, null);
     }
 
 }

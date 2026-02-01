@@ -1,56 +1,66 @@
 package com.shecancode.attendence.registration.Model;
 
 import com.shecancode.attendence.registration.Enum.Status;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Entity
+@Table(name = "student")
 @Builder
-
 @Getter
+@Setter
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class Student {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "student_id", updatable = false, nullable = false)
     private UUID studentId;
 
-    private String student_FirstName;
+    @NotBlank(message = "First name is required")
+    @Size(max = 100)
+    @Column(name = "student_first_name", nullable = false)
+    private String studentFirstName;
 
-    private String student_Lastname;
+    @NotBlank(message = "Last name is required")
+    @Size(max = 100)
+    @Column(name = "student_last_name", nullable = false)
+    private String studentLastName;
 
-    private int phoneNumber;
+    @Column(name = "phone_number")
+    private String phoneNumber;
 
+    @Email(message = "Email should be valid")
+    @Column(unique = true, nullable = false)
     private String email;
 
-    private int home_address;
+    @Column(name = "home_address")
+    private String homeAddress;
 
-    private int cohort_Id;
+    @ManyToOne
+    @JoinColumn(name = "cohort_id")
+    private Cohort cohort;
 
-    private Status status;
-    private Date startDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "student_status", nullable = false)
+    private Status status = Status.ACTIVE;
 
-    private Date graduationDate;
+    @Column(name = "current_occupation")
+    private String currentOccupation;
 
-    @Override
-    public String toString() {
-        return "Student{" +
-                "studentId=" + studentId +
-                ", student_FirstName='" + student_FirstName + '\'' +
-                ", student_Lastname='" + student_Lastname + '\'' +
-                ", phoneNumber=" + phoneNumber +
-                ", email='" + email + '\'' +
-                ", home_address=" + home_address +
-                ", cohort_Id=" + cohort_Id +
-                ", status=" + status +
-                ", startDate=" + startDate +
-                ", graduationDate=" + graduationDate +
-                '}';
-    }
+    @Column(name = "days_to_graduation")
+    private Integer daysRemaining;
+
+    @Column(name = "total_graduation_days")
+    private Integer totalProgramDays;
+
+
 }

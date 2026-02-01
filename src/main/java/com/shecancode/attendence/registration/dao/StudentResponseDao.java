@@ -2,32 +2,37 @@ package com.shecancode.attendence.registration.dao;
 
 import com.shecancode.attendence.registration.Enum.Status;
 import lombok.Builder;
+import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Builder
+@Data
 public class StudentResponseDao {
 
     private UUID studentId;
 
-    private String student_FirstName;
+    private String studentFirstName;
 
-    private String student_Lastname;
+    private String studentLastName;
 
-    private int phoneNumber;
+    private String phoneNumber;
 
     private String email;
 
-    private int home_address;
+    private String homeAddress;
 
-    private int cohort_Id;
+    private String programName;
 
     private Status status;
 
-    private String current_occupation;
+    private String currentOccupation;
 
-    private Date startDate;
+    private LocalDate programStartedDate;
 
-    private Date graduationDate;
+    private LocalDate estimateGraduationDate;
+
+    private int daysRemainingToGraduate;
+
 }
