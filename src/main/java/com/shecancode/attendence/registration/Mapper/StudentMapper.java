@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.Mapper;
 
+import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Programs;
 import com.shecancode.attendence.registration.Model.Student;
@@ -38,7 +39,8 @@ public class StudentMapper {
         student.setPhoneNumber(requestDao.getPhoneNumber());
         student.setEmail(requestDao.getEmail());
         student.setHomeAddress(requestDao.getHomeAddress());
-        student.setStatus(requestDao.getStatus());
+        student.setStatus(Status.ACTIVE); // Automatically set new students to ACTIVE
+        student.setCohort(Cohort.builder().cohortNumber(requestDao.getCohortNumber()).build());
         student.setCohort(existingCohort); // Use the saved cohort with its cohortNumber
 
         student.setCurrentOccupation(requestDao.getCurrentOccupation());

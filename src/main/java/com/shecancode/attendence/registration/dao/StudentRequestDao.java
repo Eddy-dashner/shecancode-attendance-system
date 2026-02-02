@@ -26,11 +26,9 @@ public class StudentRequestDao {
 
     private String homeAddress;
 
-    private Status status;
-
     private String currentOccupation;
 
     private String programName;
 
-    private UUID cohortId;
+    private String cohortNumber;
 }

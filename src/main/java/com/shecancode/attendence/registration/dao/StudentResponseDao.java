@@ -35,4 +35,6 @@ public class StudentResponseDao {
 
     private int daysRemainingToGraduate;
 
+    private String cohortNumber;
+
 }

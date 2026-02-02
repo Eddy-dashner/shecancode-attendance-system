@@ -25,7 +25,7 @@ public class StudentController {
     @PostMapping
     @Operation(summary = "Create Student")
     public ResponseEntity<StudentResponseDao> addStudent( @Valid  @RequestBody StudentRequestDao studentRequestDao){
-        StudentResponseDao registeredStudent = service.createStudent(studentRequestDao);
+        StudentResponseDao registeredStudent = service.createStudent(studentRequestDao, "DEFAULT-COHORT");
         return new ResponseEntity<>(registeredStudent, HttpStatus.ACCEPTED);
     }
 }

@@ -1,7 +1,7 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.registration.Exception.CohortAlreadyExistException;
 import com.shecancode.attendence.registration.Model.Cohort;
-import com.shecancode.attendence.registration.Model.Programs;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +19,10 @@ public class CohortService {
     }
 
 
-    public Cohort createCohort(Cohort cohort){
-
+    public void createCohort(Cohort cohort){
+      if (cohortRepository.findByCohortNumber(cohort.getCohortNumber()).isPresent()) {
+          throw new CohortAlreadyExistException("Cohort with this number exist" + cohort.getCohortNumber());
+      }
         Cohort savecohort = Cohort.builder()
                 .id(UUID.randomUUID())
                 .cohortNumber(cohort.getCohortNumber())
@@ -29,7 +31,7 @@ public class CohortService {
                 .graduationDate(cohort.getGraduationDate())
                 .program(cohort.getProgram())
                 .build();
-        
-        return cohortRepository.save(savecohort);
+
+        cohortRepository.save(savecohort);
     }
 }

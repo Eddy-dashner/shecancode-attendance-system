@@ -1,6 +1,7 @@
 package com.shecancode.attendence.registration.service;
 
 import com.shecancode.attendence.registration.Enum.Status;
+import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Exception.EmailAlreadyExistException;
 import com.shecancode.attendence.registration.Mapper.StudentMapper;
 import com.shecancode.attendence.registration.Model.Cohort;
@@ -33,41 +34,20 @@ public class StudentRegistrationService {
         this.programsRepository = programsRepository;
     }
     @Transactional
-    public StudentResponseDao createStudent(StudentRequestDao studentRequestDao){
+    public StudentResponseDao createStudent(StudentRequestDao studentRequestDao, String cohortNumber){
         if ( studentRepository.existsByEmail(studentRequestDao.getEmail())){
             log.error("Student with this email exist");
 
             throw new EmailAlreadyExistException(" A student with this email exists");
         }
 
-        // Use the provided cohort or create default if not provided
-        Cohort cohort;
-        if (studentRequestDao.getCohortId() != null) {
-            cohort = cohortRepository.findById(studentRequestDao.getCohortId())
-                    .orElseThrow(() -> new RuntimeException("Cohort not found with ID: " + studentRequestDao.getCohortId()));
-        } else {
-            // Find or create a default cohort
-            cohort = cohortRepository.findByCohortNumber("DEFAULT-COHORT")
-                    .orElseGet(() -> {
-                        Cohort newCohort = new Cohort();
-                        newCohort.setCohortNumber("DEFAULT-COHORT");
-                        newCohort.setStartDate(java.time.LocalDate.now());
-                        newCohort.setEndDate(java.time.LocalDate.now().plusMonths(6));
-                        newCohort.setGraduationDate(java.time.LocalDate.now().plusMonths(6));
-                        // Create a default program
-                        Programs defaultProgram = Programs.builder()
-                                .id(UUID.randomUUID())
-                                .programName("DEFAULT-PROGRAM")
-                                .requiredProgramDuration(88)
-                                .build();
-                        defaultProgram = programsRepository.save(defaultProgram);
-                        newCohort.setProgram(defaultProgram);
-                        return cohortRepository.save(newCohort);
-                    });
-        }
+
+        Cohort createdCohort = cohortRepository.findByCohortNumber(cohortNumber)
+                .orElseThrow(()-> new CohortNotFoundException("cohort not found"));
 
         // Create student with the saved cohort
-        Student newStudent = StudentMapper.toModelStudent(studentRequestDao, cohort);
+        Student newStudent = StudentMapper.toModelStudent(studentRequestDao);
+        newStudent.setCohort(createdCohort);
         newStudent = studentRepository.save(newStudent);
 
         return StudentMapper.toDTO(newStudent);
