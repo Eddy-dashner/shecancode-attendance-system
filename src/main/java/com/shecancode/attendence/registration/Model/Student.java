@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -22,45 +21,43 @@ public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "student_id", updatable = false, nullable = false)
-    private UUID studentId;
+    @Column(name = "student_id")
+    private UUID id;
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 100)
-    @Column(name = "student_first_name", nullable = false)
+    @Column(name = "student_first_name")
     private String studentFirstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 100)
-    @Column(name = "student_last_name", nullable = false)
+    @Column(name = "student_last_name")
     private String studentLastName;
+
+    @Column(name = "email", unique = true)
+    private String email;
 
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Email(message = "Email should be valid")
-    @Column(unique = true, nullable = false)
-    private String email;
-
     @Column(name = "home_address")
     private String homeAddress;
-
-    @ManyToOne
-    @JoinColumn(name = "cohort_id")
-    private Cohort cohort;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "student_status", nullable = false)
-    private Status status = Status.ACTIVE;
 
     @Column(name = "current_occupation")
     private String currentOccupation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "student_status")
+    private Status status;
+
     @Column(name = "days_to_graduation")
-    private Integer daysRemaining;
+    private Integer daysToGraduation;
 
     @Column(name = "total_graduation_days")
-    private Integer totalProgramDays;
+    private Integer totalGraduationDays;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cohort_id")
+    private Cohort cohort;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "program_id")
+    private Program program;
 
 }

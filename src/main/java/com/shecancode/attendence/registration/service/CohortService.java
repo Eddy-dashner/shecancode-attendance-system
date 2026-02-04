@@ -3,35 +3,49 @@ package com.shecancode.attendence.registration.service;
 import com.shecancode.attendence.registration.Exception.CohortAlreadyExistException;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
+import com.shecancode.attendence.registration.Repository.ProgramRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.ArrayList;
 
+@Slf4j
 @Service
+@Transactional
 public class CohortService {
 
 //    private Cohort cohort;
 
     private final CohortRepository cohortRepository;
+    private final ProgramRepository programRepository;
 
-    public CohortService(CohortRepository cohortRepository) {
+
+    public CohortService(CohortRepository cohortRepository, ProgramRepository programRepository) {
         this.cohortRepository = cohortRepository;
+        this.programRepository = programRepository;
     }
 
+    public Cohort createCohort(Cohort cohort) {
+        log.info("Starting cohort creation for: {}", cohort.getCohortNumber());
 
-    public void createCohort(Cohort cohort){
-      if (cohortRepository.findByCohortNumber(cohort.getCohortNumber()).isPresent()) {
-          throw new CohortAlreadyExistException("Cohort with this number exist" + cohort.getCohortNumber());
-      }
-        Cohort savecohort = Cohort.builder()
-                .id(UUID.randomUUID())
+        if (cohortRepository.findByCohortNumber(cohort.getCohortNumber()).isPresent()) {
+            throw new CohortAlreadyExistException("Cohort with this number exists: " + cohort.getCohortNumber());
+        }
+
+        // Build the cohort without programs (as per your requirement)
+        Cohort savecohort = cohortRepository.save(Cohort.builder()
                 .cohortNumber(cohort.getCohortNumber())
                 .startDate(cohort.getStartDate())
                 .endDate(cohort.getEndDate())
                 .graduationDate(cohort.getGraduationDate())
-                .program(cohort.getProgram())
-                .build();
+                .programs(new ArrayList<>()) // Explicitly empty
+                .build());
 
-        cohortRepository.save(savecohort);
+        log.info("Cohort created successfully with ID: {}", savecohort.getId());
+        return savecohort;
+
     }
 }
+
+
