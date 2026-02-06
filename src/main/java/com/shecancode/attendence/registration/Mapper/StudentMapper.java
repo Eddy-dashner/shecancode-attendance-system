@@ -27,7 +27,7 @@ public class StudentMapper {
                 .build();
     }
 
-    public static Student toModelStudent(StudentRequestDao requestDao, Cohort existingCohort){
+    public static Student toModelStudent(StudentRequestDao requestDao){
 
         if (requestDao == null) return null;
 
@@ -49,8 +49,8 @@ public class StudentMapper {
     }
 
     // Overloaded method for backward compatibility
-    public static Student toModelStudent(StudentRequestDao requestDao){
-        return toModelStudent(requestDao, null);
-    }
+//    public static Student toModelStudent(StudentRequestDao requestDao){
+//        return toModelStudent(requestDao, null);
+//    }
 
 }

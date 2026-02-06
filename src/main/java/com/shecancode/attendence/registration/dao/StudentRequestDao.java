@@ -1,14 +1,18 @@
 package com.shecancode.attendence.registration.dao;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Builder
 @Data
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class StudentRequestDao {
 
     private String studentFirstName;
