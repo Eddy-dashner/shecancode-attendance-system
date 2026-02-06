@@ -19,15 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class StudentMapperTest {
 
-    @InjectMocks
-    private StudentMapper studentMapper;
-
     @Mock
     Student student;
-
-    StudentMapperTest(StudentMapper studentMapper) {
-        this.studentMapper = studentMapper;
-    }
 
 
     @Test
