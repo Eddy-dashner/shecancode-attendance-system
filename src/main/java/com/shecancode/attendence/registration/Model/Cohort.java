@@ -32,8 +32,8 @@ public class Cohort {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "graduation_date", nullable = false)
-    private LocalDate graduationDate;
+//    @Column(name = "graduation_date", nullable = false)
+//    private LocalDate graduationDate;
 
     @OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Program> programs = new ArrayList<>();

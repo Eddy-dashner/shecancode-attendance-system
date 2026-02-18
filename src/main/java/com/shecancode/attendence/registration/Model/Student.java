@@ -45,12 +45,6 @@ public class Student {
     @Column(name = "student_status")
     private Status status;
 
-    @Column(name = "days_to_graduation")
-    private Integer daysToGraduation;
-
-    @Column(name = "total_graduation_days")
-    private Integer totalGraduationDays;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cohort_id")
     private Cohort cohort;

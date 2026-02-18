@@ -14,7 +14,7 @@ CREATE TABLE cohort (
                         cohort_number VARCHAR(255) NOT NULL UNIQUE,
                         start_date DATE NOT NULL,
                         end_date DATE NOT NULL,
-                        graduation_date DATE NOT NULL,
+--                         graduation_date DATE NOT NULL,
                         PRIMARY KEY (cohort_id)
 );
 
@@ -24,8 +24,10 @@ CREATE TABLE cohort (
 CREATE TABLE program (
                          program_id UUID NOT NULL,
                          program_name VARCHAR(255) NOT NULL,
-                         program_running_period INTEGER,
-                         cohort_id UUID NOT NULL,
+                         program_Duration INTEGER,
+                         program_start_date DATE NOT NULL,
+                         program_end_date   DATE NOT NULL,
+                         cohort_id UUID NOT NULL ,
                          PRIMARY KEY (program_id),
                          CONSTRAINT fk_program_cohort FOREIGN KEY (cohort_id) REFERENCES cohort (cohort_id)
 );
@@ -42,8 +44,8 @@ CREATE TABLE student (
                          home_address VARCHAR(255),
                          current_occupation VARCHAR(255),
                          student_status VARCHAR(50), -- Mapped from Enum String
-                         days_to_graduation INTEGER,
-                         total_graduation_days INTEGER,
+--                          days_to_graduation INTEGER,
+--                          total_graduation_days INTEGER,
                          cohort_id UUID NOT NULL,
                          program_id UUID NOT NULL,
                          PRIMARY KEY (student_id),

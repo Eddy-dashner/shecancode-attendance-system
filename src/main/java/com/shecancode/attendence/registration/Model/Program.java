@@ -3,8 +3,7 @@ package com.shecancode.attendence.registration.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Builder
@@ -24,9 +23,20 @@ public class Program {
     @Column(nullable = false)
     private String programName;
 
-    private Integer programRunningPeriod;
+    @Column(name = "program_Duration")
+    private Integer programDuration;
+
+    @Column(name = "program_start_date", nullable = false)
+    private LocalDate programStartDate;
+
+    @Column(name = "program_end_date", nullable = false)
+    private LocalDate programEndDate;
+
+//    @Column(name = "days_to_graduate")
+//    private Integer daysRemainingUntilGraduation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
+
 }

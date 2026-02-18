@@ -23,7 +23,7 @@ public class StudentMapper {
                 .programStartedDate(student.getCohort().getStartDate())
                 .cohortNumber(student.getCohort().getCohortNumber())
                 .estimateGraduationDate(student.getCohort().getEndDate())
-                .daysRemainingToGraduate(student.getDaysToGraduation() != null ? student.getDaysToGraduation() : 0)
+//                .daysRemainingToGraduate(student.getDaysToGraduation() != null ? student.getDaysToGraduation() : 0)
                 .build();
     }
 

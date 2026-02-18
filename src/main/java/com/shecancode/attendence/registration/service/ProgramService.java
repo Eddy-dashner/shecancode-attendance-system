@@ -1,6 +1,7 @@
 package com.shecancode.attendence.registration.service;
 
 import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
+import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
@@ -21,28 +22,35 @@ public class ProgramService {
         this.cohortRepository = cohortRepository;
     }
 
-    public void createProgram(Program program){
+    public Program createProgram(String cohortNumber, Program program){
+
+        Cohort cohort = cohortRepository.findByCohortNumber(cohortNumber).orElseThrow(()
+                -> new CohortNotFoundException(" cohort not found exception"));
+
         if (program.getId() != null && programRepository.existsById(program.getId())) {
             throw new IllegalArgumentException("Program already exists with ID: " + program.getId());
         }
-        if (program.getCohort() == null || program.getCohort().getId() == null){
-            log.error("Cohort reference is missing in the request.");
-            throw new CohortNotFoundException("Cohort not found");
+        if (program.getProgramStartDate() != null && program.getProgramEndDate().isBefore(program.getProgramStartDate())){
+            throw new IllegalArgumentException("End date cannot be before start date");
         }
 
-        cohortRepository.findById(program.getCohort().getId())
-                .orElseThrow(() -> new CohortNotFoundException("Cohort not found in database"));
 
         Program newProgram = Program.builder()
                 .id(UUID.randomUUID())
                 .programName(program.getProgramName())
-                .cohort(program.getCohort())
-                .programRunningPeriod(program.getProgramRunningPeriod())
+                .programDuration(program.getProgramDuration())
+                .cohort(cohort)
+                .programStartDate(program.getProgramStartDate())
+                .programEndDate(program.getProgramEndDate())
+//                .daysRemainingUntilGraduation(program.getDaysRemainingUntilGraduation())
                 .build();
         log.info("program saved successfully");
-        programRepository.save(newProgram);
-        log.info("Program '{}' saved successfully under Cohort ID: {}",
-                newProgram.getProgramName(), newProgram.getCohort().getId());
+
+        log.info("saving a program under the cohort: {} ", newProgram.getProgramName(),cohortNumber);
+
+        return programRepository.save(newProgram);
 
     }
+
+
 }

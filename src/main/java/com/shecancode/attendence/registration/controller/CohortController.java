@@ -26,4 +26,5 @@ public class CohortController {
                 .status(HttpStatus.CREATED)
                 .body(savedCohort);
     }
+
 }
