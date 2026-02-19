@@ -53,4 +53,7 @@ public class Student {
     @JoinColumn(name = "program_id")
     private Program program;
 
+    public String getFullName() {
+        return studentFirstName + " " + studentLastName;
+    }
 }
