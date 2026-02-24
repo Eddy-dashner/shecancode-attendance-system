@@ -78,7 +78,7 @@ public class StudentRegistrationService {
     }
 
     /**
-     * Simple utility to check email pattern
+     * email validation email pattern
      */
     private boolean isValidEmail(String email) {
         if (email == null || email.isBlank()) return false;

@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.Repository;
 
+import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,4 +9,6 @@ import java.util.UUID;
 
 public interface StudentRepository extends JpaRepository<Student, UUID> {
     boolean existsByEmail(String email);
+
+    Student findStudentByStatus(Status status);
 }

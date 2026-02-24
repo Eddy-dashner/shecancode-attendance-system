@@ -6,6 +6,7 @@ import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Attendance {
 
     @Id
@@ -41,7 +43,7 @@ public class Attendance {
     @Column(nullable = false)
     private AttendanceStatus attendanceStatus;
 
-    @Column(name = "check_in_time")
+    @Column(name = "check_in_time", nullable = false)
     private LocalTime checkInTime;
 
     @Column(name = "remarks")
@@ -57,11 +59,11 @@ public class Attendance {
     private LocalDateTime updatedAt;
 
 
-    @Column(name = "recordedBy_id")
+    @Column(name = "recorded_by_id", nullable = false, updatable = false)
     private UUID recordedById;
 
 
-    @Column(name = "recordedBy_name")
+    @Column(name = "recorded_by_name", nullable = false, updatable = false)
     private String recordedByName;
 
     @PrePersist
