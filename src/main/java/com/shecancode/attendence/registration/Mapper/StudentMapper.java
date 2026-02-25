@@ -47,7 +47,6 @@ public class StudentMapper {
         return student;
 
     }
-
     // Overloaded method for backward compatibility
 //    public static Student toModelStudent(StudentRequestDao requestDao){
 //        return toModelStudent(requestDao, null);

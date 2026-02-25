@@ -1,10 +1,6 @@
 package com.shecancode.attendence.registration.controller;
-
-import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.service.StudentLifeCycleService;
-import com.shecancode.attendence.registration.service.StudentRegistrationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

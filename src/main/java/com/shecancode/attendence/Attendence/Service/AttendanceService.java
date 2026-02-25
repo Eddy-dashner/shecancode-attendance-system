@@ -1,86 +1,118 @@
 package com.shecancode.attendence.Attendence.Service;
 
-import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
-import com.shecancode.attendence.Attendence.Enum.AttendanceStatus;
 import com.shecancode.attendence.Attendence.Mapper.AttendanceMapper;
 import com.shecancode.attendence.Attendence.Model.Attendance;
-import com.shecancode.attendence.Attendence.dto.AttendanceRequest;
+import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
 import com.shecancode.attendence.Attendence.dto.AttendanceResponse;
+import com.shecancode.attendence.Attendence.dto.BulkAttendanceRequest;
+import com.shecancode.attendence.Attendence.dto.StudentAttendanceRequestDto;
 import com.shecancode.attendence.registration.Enum.Status;
+import com.shecancode.attendence.registration.Exception.ResourceNotFoundException;
+import com.shecancode.attendence.registration.Exception.StudentNotFoundException;
 import com.shecancode.attendence.registration.Model.Cohort;
-import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.Model.Program;
+import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
-import com.shecancode.attendence.registration.Repository.CohortRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
-    private  final  StudentRepository studentRepository;
+    private final StudentRepository studentRepository;
     private final ProgramRepository programRepository;
     private final CohortRepository cohortRepository;
-//    private final ParticipantService participantService;
 
-    public AttendanceService(AttendanceRepository attendanceRepository,
-                             StudentRepository studentRepository, ProgramRepository programRepository, CohortRepository cohortRepository
-//                             ParticipantService participantService
-    ) {
+    public AttendanceService(AttendanceRepository attendanceRepository, StudentRepository studentRepository, ProgramRepository programRepository, CohortRepository cohortRepository) {
         this.attendanceRepository = attendanceRepository;
         this.studentRepository = studentRepository;
         this.programRepository = programRepository;
         this.cohortRepository = cohortRepository;
-//        this.participantService = participantService;
     }
+
+
+    // private final ParticipantService participantService; // optional
 
     @Transactional
-    public AttendanceResponse recordAttendance(AttendanceRequest attendanceRequest){
+    public List<AttendanceResponse> recordBulkAttendance(BulkAttendanceRequest request, UUID programId, UUID cohortId) {
 
-        Student student = studentRepository.findById(attendanceRequest.getStudentId())
-                .orElseThrow(() -> new RuntimeException(" Student Not found"));
+        // 1️⃣ Fetch Program & Cohort (Single Fetch)
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
 
-        if (student.getStatus() == Status.DROPPED_OUT) {
-            throw new RuntimeException("Student is dropped out");
+        Cohort cohort = cohortRepository.findById(cohortId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cohort not found"));
+
+        // 2️⃣ Pre-fetch all students in the request to avoid querying inside the loop
+        List<UUID> studentIds = request.getStudents().stream()
+                .map(StudentAttendanceRequestDto::getStudentId)
+                .toList();
+
+        Map<UUID, Student> studentMap = studentRepository.findAllById(studentIds).stream()
+                .collect(Collectors.toMap(Student::getId, s -> s));
+
+        // 3️⃣ Pre-fetch existing attendance for this date/cohort to prevent duplicates efficiently
+        Set<UUID> existingAttendanceIds = attendanceRepository
+                .findStudentIdsByDateAndCohort(request.getAttendanceDate(), cohortId);
+
+        List<Attendance> attendancesToSave = new ArrayList<>();
+
+        // 4️⃣ Process the list
+        for (StudentAttendanceRequestDto studentDto : request.getStudents()) {
+            Student student = studentMap.get(studentDto.getStudentId());
+
+            if (student == null) {
+                log.warn("Student ID {} not found in database", studentDto.getStudentId());
+                continue;
+            }
+
+            // 5️⃣ Validation Logic
+            if (student.getStatus() == Status.DROPPED_OUT) {
+                log.warn("Skipping dropped-out student: {}", student.getEmail());
+                continue;
+            }
+
+            if (!student.getProgram().getId().equals(programId) || !student.getCohort().getId().equals(cohortId)) {
+                log.warn("Skipping student {}: mismatch in program/cohort", student.getEmail());
+                continue;
+            }
+
+            if (existingAttendanceIds.contains(student.getId())) {
+                log.warn("Attendance already exists for student {} on {}", student.getEmail(), request.getAttendanceDate());
+                continue;
+            }
+
+            // 6️⃣ Map to entity (No DB hits here)
+            Attendance attendance = AttendanceMapper.toAttendance(
+                    studentDto, student, program, cohort,
+                    request.getRecordedById(), request.getRecordedByName(), request.getAttendanceDate()
+            );
+
+            attendancesToSave.add(attendance);
         }
 
-
-
-        Program program = programRepository.findById(attendanceRequest.getProgramId())
-                .orElseThrow(() -> new RuntimeException(" Program Not found"));
-
-        Cohort cohort = cohortRepository.findById(attendanceRequest.getCohortId())
-                .orElseThrow(() -> new RuntimeException(" Cohort Not found"));
-
-                if (student.getStatus() == Status.DROPPED_OUT){
-            throw new IllegalArgumentException("Student dropout out of the program");
+        // 7️⃣ Bulk Save (Significant performance boost)
+        if (attendancesToSave.isEmpty()) {
+            log.warn("No new attendance records to save for cohort {}", cohort.getCohortNumber());
+            return Collections.emptyList();
         }
-        Attendance attendance = Attendance.builder()
 
-                .attendanceId(UUID.randomUUID())
-                .attendanceStatus(AttendanceStatus.valueOf(attendanceRequest
-                        .getAttendanceStatus().toUpperCase()))
-                .attendanceRecordedDate(attendanceRequest.getAttendanceDate())
-                .remarks(attendanceRequest.getRemarks())
-                .student(student)
-                .program(program)
-                .cohort(cohort)
-                .recordedById(attendanceRequest.getRecordedById())
-                .recordedByName(attendanceRequest.getRecordedByName())
-                .build();
+        List<Attendance> savedAttendances = attendanceRepository.saveAll(attendancesToSave);
 
-        log.info("attendance is saved successfully");
-        Attendance saveAttendance = attendanceRepository.save(attendance);
+        log.info("Successfully recorded attendance for {} students", savedAttendances.size());
 
-//        participantService.updateProgress(student, student.getProgram());
-
-        return AttendanceMapper.toResponseDTO(saveAttendance);
-
+        // 8️⃣ Map back to Response DTOs
+        return savedAttendances.stream()
+                .map(AttendanceMapper::toResponseDTO)
+                .toList();
     }
+
 }
