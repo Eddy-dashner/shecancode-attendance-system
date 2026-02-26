@@ -20,10 +20,10 @@ public class Program {
     @Column(name = "program_id")
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "program_name", nullable = false)
     private String programName;
 
-    @Column(name = "program_Duration")
+    @Column(name = "program_Duration", nullable = false)
     private Integer programDuration;
 
     @Column(name = "program_start_date", nullable = false)
@@ -32,6 +32,7 @@ public class Program {
     @Column(name = "program_end_date", nullable = false)
     private LocalDate programEndDate;
 
+
 //    @Column(name = "days_to_graduate")
 //    private Integer daysRemainingUntilGraduation;
 
@@ -39,4 +40,8 @@ public class Program {
     @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
+    private boolean isCalendarExpired() {
+        return LocalDate.now().isAfter(this.programEndDate);
+
+    }
 }

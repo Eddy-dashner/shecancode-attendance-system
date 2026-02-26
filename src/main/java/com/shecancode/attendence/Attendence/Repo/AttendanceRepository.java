@@ -9,31 +9,30 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
+    // Standard naming: count + By + [Property] + And + [Property]
+    long countByStudentAndProgramAndAttendanceStatus(Student student, Program program, AttendanceStatus status);
+
+    @Query("SELECT COUNT(DISTINCT a.attendanceRecordedDate) FROM Attendance a WHERE a.program.id = :programId")
+    long countDistinctDatesByProgramId(@Param("programId") UUID programId);
+
+    // Your existing duplicate check method
+    @Query("SELECT a.student.id FROM Attendance a WHERE a.attendanceRecordedDate = :date AND a.cohort.id = :cohortId")
+    Set<UUID> findStudentIdsByDateAndCohort(@Param("date") LocalDate date, @Param("cohortId") UUID cohortId);
+
+    // 1. For ParticipantService (Single Student - used for Health Sync)
     List<Attendance> findByStudentAndProgramOrderByAttendanceRecordedDateDesc(Student student, Program program);
 
-//    int countByStudentAndProgramAndAttendanceStatus(Student student, Program program, AttendanceStatus attendanceStatus);
-//
-//    boolean existsByStudentAndAttendanceRecordedDate(Student student, LocalDate attendanceRecordedDate);
-
-    @Query("SELECT a.student.id FROM Attendance a " +
-            "WHERE a.attendanceRecordedDate = :attendanceDate " +
-            "AND a.cohort.id = :cohortId")
-    Set<UUID> findStudentIdsByDateAndCohort(
-            @Param("attendanceDate") LocalDate attendanceDate,
-            @Param("cohortId") UUID cohortId
-    );
-    @Query("SELECT a FROM Attendance a WHERE a.attendanceRecordedDate = :date " +
-            "AND a.cohort.id = :cohortId " +
-            "AND a.student.id IN :studentIds")
+    // 2. For AttendanceService (Multiple Students - used for Bulk Update)
+    // We use "In" to handle the List of IDs
     List<Attendance> findByAttendanceRecordedDateAndCohortIdAndStudentIdIn(
-            @Param("date") LocalDate date,
-            @Param("cohortId") UUID cohortId,
-            @Param("studentIds") List<UUID> studentIds
+            LocalDate date,
+            UUID cohortId,
+            Collection<UUID> studentIds
     );
-
 }

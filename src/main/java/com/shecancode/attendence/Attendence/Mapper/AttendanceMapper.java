@@ -40,7 +40,7 @@ public class AttendanceMapper {
     }
 
     // Map single Attendance entity to AttendanceResponse DTO
-    public static AttendanceResponse toResponseDTO(Attendance attendance) {
+    public static AttendanceResponse toResponseDTO(Attendance attendance, Integer daysRemaining) {
         if (attendance == null) return null;
 
         return AttendanceResponse.builder()
@@ -55,6 +55,7 @@ public class AttendanceMapper {
                 .attendanceStatus(attendance.getAttendanceStatus().name())
                 .checkInTime(attendance.getCheckInTime())
                 .remarks(attendance.getRemarks())
+                .daysRemainingUntilGraduation(daysRemaining)
                 .attendanceRecordedDate(attendance.getAttendanceRecordedDate())
                 .recordedById(attendance.getRecordedById())
                 .recordedByName(attendance.getRecordedByName())
@@ -63,10 +64,11 @@ public class AttendanceMapper {
                 .build();
     }
 
-    public static List<AttendanceResponse> toResponseDTOList(List<Attendance> attendances) {
+    public static List<AttendanceResponse> toResponseDTOList(List<Attendance> attendances, Integer daysRemaining) {
         if (attendances == null) return Collections.emptyList();
+
         return attendances.stream()
-                .map(AttendanceMapper::toResponseDTO)
+                .map(attendance -> toResponseDTO(attendance, daysRemaining))
                 .toList(); // Java 16+ syntax
     }
 
