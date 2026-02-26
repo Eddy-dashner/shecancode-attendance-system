@@ -16,9 +16,9 @@ import java.util.UUID;
 public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
     List<Attendance> findByStudentAndProgramOrderByAttendanceRecordedDateDesc(Student student, Program program);
 
-    int countByStudentAndProgramAndAttendanceStatus(Student student, Program program, AttendanceStatus attendanceStatus);
-
-    boolean existsByStudentAndAttendanceRecordedDate(Student student, LocalDate attendanceRecordedDate);
+//    int countByStudentAndProgramAndAttendanceStatus(Student student, Program program, AttendanceStatus attendanceStatus);
+//
+//    boolean existsByStudentAndAttendanceRecordedDate(Student student, LocalDate attendanceRecordedDate);
 
     @Query("SELECT a.student.id FROM Attendance a " +
             "WHERE a.attendanceRecordedDate = :attendanceDate " +
@@ -27,4 +27,13 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
             @Param("attendanceDate") LocalDate attendanceDate,
             @Param("cohortId") UUID cohortId
     );
+    @Query("SELECT a FROM Attendance a WHERE a.attendanceRecordedDate = :date " +
+            "AND a.cohort.id = :cohortId " +
+            "AND a.student.id IN :studentIds")
+    List<Attendance> findByAttendanceRecordedDateAndCohortIdAndStudentIdIn(
+            @Param("date") LocalDate date,
+            @Param("cohortId") UUID cohortId,
+            @Param("studentIds") List<UUID> studentIds
+    );
+
 }

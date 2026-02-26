@@ -38,4 +38,19 @@ public class AttendanceController {
 
         return new ResponseEntity<>(responses, HttpStatus.CREATED);
     }
+
+    @PatchMapping
+    public ResponseEntity<List<AttendanceResponse>> updateBulkAttendance(
+            @PathVariable UUID programId,
+            @PathVariable UUID cohortId,
+            @Valid @RequestBody BulkAttendanceRequest request) {
+
+        List<AttendanceResponse> responses = attendanceService.updateBulkAttendance(request, programId, cohortId);
+
+        if (responses.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(responses);
+    }
 }

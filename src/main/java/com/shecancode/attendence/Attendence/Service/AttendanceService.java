@@ -115,4 +115,38 @@ public class AttendanceService {
                 .toList();
     }
 
+    @Transactional
+    public List<AttendanceResponse> updateBulkAttendance(BulkAttendanceRequest request, UUID programId, UUID cohortId) {
+        // 1. Fetch records that ALREADY exist
+        List<UUID> studentIds = request.getStudents().stream()
+                .map(StudentAttendanceRequestDto::getStudentId).toList();
+
+        // Find existing entities to update
+        List<Attendance> existingRecords = attendanceRepository
+        .findByAttendanceRecordedDateAndCohortIdAndStudentIdIn(request.getAttendanceDate(), cohortId, studentIds );
+
+        // Create a map for quick lookup
+        Map<UUID, Attendance> attendanceMap = existingRecords.stream()
+                .collect(Collectors.toMap(a -> a.getStudent().getId(), a -> a));
+
+        List<Attendance> toUpdate = new ArrayList<>();
+
+        for (StudentAttendanceRequestDto dto : request.getStudents()) {
+            Attendance attendance = attendanceMap.get(dto.getStudentId());
+
+            if (attendance != null) {
+                // Update fields
+                attendance.setAttendanceStatus(dto.getAttendanceStatus());
+                attendance.setCheckInTime(dto.getCheckInTime());
+                attendance.setRemarks(dto.getRemarks());
+                attendance.setRecordedByName(request.getRecordedByName());
+                toUpdate.add(attendance);
+            }
+        }
+
+        return attendanceRepository.saveAll(toUpdate).stream()
+                .map(AttendanceMapper::toResponseDTO)
+                .toList();
+    }
+
 }
