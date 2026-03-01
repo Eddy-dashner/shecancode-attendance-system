@@ -57,6 +57,7 @@ public class ParticipantService {
                 .orElse(ParticipantProgress.builder()
                         .student(student)
                         .program(program)
+                        .lastUpdated(LocalDate.now())
                         .build());
 
         progress.setAttendancePoints(currentPoints);

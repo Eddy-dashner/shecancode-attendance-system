@@ -52,3 +52,37 @@ CREATE TABLE student (
                          CONSTRAINT fk_student_cohort FOREIGN KEY (cohort_id) REFERENCES cohort (cohort_id),
                          CONSTRAINT fk_student_program FOREIGN KEY (program_id) REFERENCES program (program_id)
 );
+
+-- ==========================================
+-- 5. CREATE ATTENDANCE
+-- ==========================================
+CREATE TABLE attendance (
+                         attendance_id UUID NOT NULL,
+                         student_id UUID NOT NULL,
+                         program_id UUID NOT NULL,
+                         cohort_id UUID NOT NULL,
+                         check_in_time TIMESTAMP,
+                         attendance_status VARCHAR(255),
+                         remarks VARCHAR(255),
+                         attendance_recorded_date TIMESTAMP,
+                         created_at TIMESTAMP,
+                         updated_at TIMESTAMP,
+                         recorded_by_id UUID,
+                         recorded_by_name VARCHAR(255),
+                         PRIMARY KEY (attendance_id),
+                         CONSTRAINT fk_attendance_student FOREIGN KEY (student_id) REFERENCES student (student_id),
+                         CONSTRAINT fk_attendance_program FOREIGN KEY (program_id) REFERENCES program (program_id),
+                         CONSTRAINT fk_attendance_cohort FOREIGN KEY (cohort_id) REFERENCES cohort (cohort_id)
+);
+
+CREATE TABLE participant(
+                         id UUID NOT NULL PRIMARY KEY,
+                         student_id UUID NOT NULL,
+                         program_id UUID NOT NULL,
+                         attendance_points DOUBLE,
+                         attendance_percentage DOUBLE,
+                         progress_color VARCHAR(255),
+                         consecutive_absences VARCHAR(255),
+                         last_updated TIMESTAMP
+
+);

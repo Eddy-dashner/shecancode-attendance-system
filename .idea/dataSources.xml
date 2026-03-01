@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="mydb" uuid="6cd7c976-225d-471b-9f0c-10c5ebda8dbe">
+    <data-source source="LOCAL" name="mydb" uuid="1b4dd505-f3ce-4a38-a636-584c959ed9aa">
       <driver-ref>h2.unified</driver-ref>
       <synchronize>true</synchronize>
       <imported>true</imported>
-      <remarks>$PROJECT_DIR$/src/main/resources/application.yaml</remarks>
       <jdbc-driver>org.h2.Driver</jdbc-driver>
       <jdbc-url>jdbc:h2:mem:mydb</jdbc-url>
       <jdbc-additional-properties>
