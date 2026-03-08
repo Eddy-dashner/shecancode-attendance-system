@@ -80,7 +80,7 @@ class StudentRegistrationServiceTest {
         // Given
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(cohortRepository.findByCohortNumber(cohortNumber)).thenReturn(Optional.of(mockCohort));
-        when(programRepository.findByProgramName(anyString())).thenReturn(Optional.of(mockProgram));
+        when(programRepository.findFirstByProgramName(anyString())).thenReturn(Optional.of(mockProgram));
         when(studentRepository.save(any(Student.class))).thenAnswer(i ->i.getArguments()[0]);
 
         StudentResponseDao responseDao = registrationService.createStudent(validRequest, cohortNumber);
@@ -129,7 +129,7 @@ class StudentRegistrationServiceTest {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         Cohort mockCohort = new Cohort();
         when(cohortRepository.findByCohortNumber(anyString())).thenReturn(Optional.of(mockCohort));
-        when(programRepository.findByProgramName(programName)).thenReturn(Optional.empty());
+        when(programRepository.findFirstByProgramName(programName)).thenReturn(Optional.empty());
 
         assertThrows(ProgramNotFoundException.class, () -> {
             registrationService.createStudent(validRequest, "C10");

@@ -58,7 +58,7 @@ class ProgramServiceTest {
     }
 
     @Test
-    void test_CreateProgram_Successful() {
+    void test_createProgram_Successful() {
 
         when(programRepository.existsById(program.getId())).thenReturn(false);
 

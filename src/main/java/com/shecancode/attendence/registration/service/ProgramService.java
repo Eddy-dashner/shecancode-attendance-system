@@ -22,6 +22,11 @@ public class ProgramService {
         this.cohortRepository = cohortRepository;
     }
 
+    /**
+     * @param cohortNumber
+     * @param program
+     * @return
+     */
     public Program createProgram(String cohortNumber, Program program){
 
         Cohort cohort = cohortRepository.findByCohortNumber(cohortNumber).orElseThrow(()
@@ -33,8 +38,6 @@ public class ProgramService {
         if (program.getProgramStartDate() != null && program.getProgramEndDate().isBefore(program.getProgramStartDate())){
             throw new IllegalArgumentException("End date cannot be before start date");
         }
-
-
         Program newProgram = Program.builder()
                 .id(UUID.randomUUID())
                 .programName(program.getProgramName())
@@ -45,12 +48,10 @@ public class ProgramService {
 //                .daysRemainingUntilGraduation(program.getDaysRemainingUntilGraduation())
                 .build();
         log.info("program saved successfully");
-
         log.info("saving a program under the cohort: {} ", newProgram.getProgramName(),cohortNumber);
 
         return programRepository.save(newProgram);
 
     }
-
 
 }

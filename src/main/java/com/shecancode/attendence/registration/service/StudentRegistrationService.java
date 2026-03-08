@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor // Automatically injects final fields via constructor
@@ -52,11 +54,12 @@ public class StudentRegistrationService {
                 .orElseThrow(() -> new CohortNotFoundException("Registration failed: Cohort [" + cohortNumber + "] not found."));
 
         // 4. Lookup Program (Source: JSON Body)
-        Program program = programsRepository.findByProgramName(studentRequestDao.getProgramName())
+        Program program = programsRepository.findFirstByProgramName(studentRequestDao.getProgramName())
                 .orElseThrow(() -> new ProgramNotFoundException("Registration failed: Program [" + studentRequestDao.getProgramName() + "] not found."));
 
         // 5. Build Student Entity with Relationships
         Student student = Student.builder()
+                .id(UUID.randomUUID())
                 .studentFirstName(studentRequestDao.getStudentFirstName())
                 .studentLastName(studentRequestDao.getStudentLastName())
                 .email(studentRequestDao.getEmail())
