@@ -4,6 +4,8 @@ import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
+import com.shecancode.attendence.registration.dao.ProgramRequestDao;
+import com.shecancode.attendence.registration.dao.ProgramResponseDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,12 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,19 +61,32 @@ class ProgramServiceTest {
 
     @Test
     void test_createProgram_Successful() {
+        String cohortNumber = "C-123";
+        ProgramRequestDao request = new ProgramRequestDao();
+        request.setProgramName("Java Backend");
+        request.setProgramStartDate(LocalDate.now());
+        request.setProgramEndDate(LocalDate.now().plusMonths(6));
 
-        when(programRepository.existsById(program.getId())).thenReturn(false);
-
-        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(program.getCohort()));
+        Cohort mockCohort = new Cohort();
 
 
-        when(programRepository.save(any(Program.class))).thenAnswer
-                (invocation ->invocation.getArgument(0));
+        when(cohortRepository.findByCohortNumber(cohortNumber)).thenReturn(Optional.of(mockCohort));
 
-//       assertDoesNotThrow(() -> programService.createProgram( program));
+        //  mock: "When you receive any Program, give it back to me"
+        when(programRepository.save(any(Program.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        verify(programRepository,times(1)).save(any(Program.class));
-        verify(cohortRepository, times(1)).findById(cohortId);
+        // Ensure you call the method with the correct parameters!
+        ProgramResponseDao result = programService.createProgram(cohortNumber, request);
+
+
+
+        assertNotNull(result);
+        assertEquals("Java Backend", result.getProgramName());
+
+        // Verify that the repository was actually hit
+        verify(cohortRepository, times(1)).findByCohortNumber(cohortNumber);
+        verify(programRepository, times(1)).save(any(Program.class));
 
 
 

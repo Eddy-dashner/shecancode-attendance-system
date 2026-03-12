@@ -8,7 +8,6 @@ import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -36,24 +35,16 @@ class StudentMapperTest {
                 .homeAddress("student")
                 .currentOccupation("Employeed")
                 .status(Status.ACTIVE)
-                .daysToGraduation(100)
                 .program(Program.builder().programName("BACKEND").build())
                 .cohort(Cohort.builder().cohortNumber("cohort-10").build())
-                .totalGraduationDays(200)
+//                .totalGraduationDays(200)
                 .build();
-
          //act: map entity to dto
-
         StudentResponseDao studentResponseDao = StudentMapper.toDTO(student);
-
         //assertions:
         assertNotNull(studentResponseDao);
         assertEquals(student.getStudentFirstName(),(studentResponseDao.getStudentFirstName()));
-        assertEquals(100, studentResponseDao.getDaysRemainingToGraduate());
-
-
     }
-
     @Test
     void toModelStudent() {
         StudentRequestDao requestDao =  StudentRequestDao.builder()

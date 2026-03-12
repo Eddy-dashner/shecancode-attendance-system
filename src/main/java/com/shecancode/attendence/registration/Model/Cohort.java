@@ -1,6 +1,5 @@
 package com.shecancode.attendence.registration.Model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 

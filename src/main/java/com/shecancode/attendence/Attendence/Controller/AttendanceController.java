@@ -1,8 +1,8 @@
 package com.shecancode.attendence.Attendence.Controller;
 
 import com.shecancode.attendence.Attendence.Service.AttendanceService;
-import com.shecancode.attendence.Attendence.dto.AttendanceResponse;
-import com.shecancode.attendence.Attendence.dto.BulkAttendanceRequest;
+import com.shecancode.attendence.Attendence.dao.AttendanceResponse;
+import com.shecancode.attendence.Attendence.dao.BulkAttendanceRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

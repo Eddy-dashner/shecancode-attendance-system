@@ -1,6 +1,8 @@
 package com.shecancode.attendence.registration.controller;
 
 import com.shecancode.attendence.registration.Model.Cohort;
+import com.shecancode.attendence.registration.dao.CohortRequestDao;
+import com.shecancode.attendence.registration.dao.CohortResponseDao;
 import com.shecancode.attendence.registration.service.CohortService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,13 +20,13 @@ public class CohortController {
     }
 
     @PostMapping
-    protected ResponseEntity<Cohort> createCohort(@RequestBody Cohort cohort){
-        log.info("Received cohort request: {}", cohort.getCohortNumber());
+    protected ResponseEntity<CohortResponseDao> createCohort(@RequestBody CohortRequestDao cohortRequestDao){
+        log.info("Received cohort request: {}", cohortRequestDao.getCohortNumber());
 
-       Cohort savedCohort=  cohortService.createCohort(cohort);
+      CohortResponseDao saved =  cohortService.createCohort(cohortRequestDao);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedCohort);
+                .body(saved);
     }
 
 }

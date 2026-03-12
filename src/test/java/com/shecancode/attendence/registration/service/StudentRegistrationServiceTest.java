@@ -1,6 +1,5 @@
 package com.shecancode.attendence.registration.service;
 
-import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Exception.EmailAlreadyExistException;
 import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
@@ -20,9 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

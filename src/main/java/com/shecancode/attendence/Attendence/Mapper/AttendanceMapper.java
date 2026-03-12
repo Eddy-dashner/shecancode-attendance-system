@@ -1,9 +1,8 @@
 package com.shecancode.attendence.Attendence.Mapper;
 
 import com.shecancode.attendence.Attendence.Model.Attendance;
-import com.shecancode.attendence.Attendence.Enum.AttendanceStatus;
-import com.shecancode.attendence.Attendence.dto.StudentAttendanceRequestDto;
-import com.shecancode.attendence.Attendence.dto.AttendanceResponse;
+import com.shecancode.attendence.Attendence.dao.StudentAttendanceRequestDto;
+import com.shecancode.attendence.Attendence.dao.AttendanceResponse;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
@@ -12,7 +11,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class AttendanceMapper {
     // Map from single student attendance DTO to Attendance entity

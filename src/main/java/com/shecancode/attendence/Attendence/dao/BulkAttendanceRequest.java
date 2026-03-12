@@ -1,7 +1,5 @@
-package com.shecancode.attendence.Attendence.dto;
+package com.shecancode.attendence.Attendence.dao;
 
-import com.shecancode.attendence.registration.Model.Student;
-import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

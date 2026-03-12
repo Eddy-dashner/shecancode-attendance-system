@@ -1,6 +1,7 @@
 package com.shecancode.attendence.registration.controller;
 
 import com.shecancode.attendence.registration.Model.Program;
+import com.shecancode.attendence.registration.dao.ProgramRequestDao;
 import com.shecancode.attendence.registration.service.ProgramService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,10 +20,10 @@ public class ProgramController {
 
     @PostMapping("/{cohortNumber}/program")
     public ResponseEntity<String> CreateProgram(@PathVariable String cohortNumber,
-                                                @RequestBody Program program){
+                                                @RequestBody ProgramRequestDao  requestDao){
 
         log.info("program created : {} ",  cohortNumber);
-       programService.createProgram( cohortNumber, program);
+       programService.createProgram( cohortNumber, requestDao);
 
        return new ResponseEntity<>("Program created", HttpStatus.ACCEPTED);
 

@@ -2,9 +2,6 @@ package com.shecancode.attendence.registration.Model;
 
 import com.shecancode.attendence.registration.Enum.Status;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.UUID;

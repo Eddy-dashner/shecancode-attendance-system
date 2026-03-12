@@ -1,25 +1,23 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.registration.dao.CohortRequestDao;
+import com.shecancode.attendence.registration.dao.CohortResponseDao;
 import com.shecancode.attendence.registration.Exception.CohortAlreadyExistException;
 import com.shecancode.attendence.registration.Model.Cohort;
-import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,41 +29,39 @@ class CohortServiceTest {
     @InjectMocks
     private CohortService cohortService;
 
-    private Cohort cohortToTest;
+    private CohortRequestDao cohortRequestToTest;
     private final String program = "Backend";
 
     @BeforeEach
     void SetUp(){
 
-        cohortToTest = new Cohort();
-        cohortToTest.setCohortNumber("C10");
-        cohortToTest.setStartDate(LocalDate.now());
-        cohortToTest.setEndDate(LocalDate.now());
-        cohortToTest.setGraduationDate(LocalDate.now());
-        cohortToTest.setPrograms(new ArrayList<>());
+        cohortRequestToTest = CohortRequestDao.builder()
+                .cohortNumber("C10")
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now())
+                .build();
 
     }
 
     @Test
     void givenNewCohortNumber_whenCreateCohort_thenCohortIsSaved(){
 
-        when(cohortRepository.findByCohortNumber(cohortToTest.getCohortNumber())).thenReturn(Optional.empty());
+        when(cohortRepository.findByCohortNumber(cohortRequestToTest.getCohortNumber())).thenReturn(Optional.empty());
         when(cohortRepository.save(any(Cohort.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Cohort savedCohort = cohortService.createCohort(cohortToTest);
+        CohortResponseDao savedCohort = cohortService.createCohort(cohortRequestToTest);
 
         assertNotNull(savedCohort);
         assertEquals("C10", savedCohort.getCohortNumber());
-        assertTrue(savedCohort.getPrograms().isEmpty());
         verify(cohortRepository).findByCohortNumber("C10");
         verify(cohortRepository, times(1)).save(any(Cohort.class));
     }
 
     @Test
     void test_createCohort_AlreadyExists_ThrowsException(){
-        when(cohortRepository.findByCohortNumber(cohortToTest.getCohortNumber())).thenReturn(Optional.of(cohortToTest));
+        when(cohortRepository.findByCohortNumber(cohortRequestToTest.getCohortNumber())).thenReturn(Optional.of(new Cohort()));
 
-        assertThrows(CohortAlreadyExistException.class, () -> cohortService.createCohort(cohortToTest));
+        assertThrows(CohortAlreadyExistException.class, () -> cohortService.createCohort(cohortRequestToTest));
     }
 
 

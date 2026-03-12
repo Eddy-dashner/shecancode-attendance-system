@@ -1,14 +1,16 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.registration.Mapper.CohortMapper;
+import com.shecancode.attendence.registration.dao.CohortResponseDao;
 import com.shecancode.attendence.registration.Exception.CohortAlreadyExistException;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
+import com.shecancode.attendence.registration.dao.CohortRequestDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -23,29 +25,31 @@ public class CohortService {
         this.cohortRepository = cohortRepository;
     }
 
-    public Cohort createCohort(Cohort cohort) {
-        log.info("Starting cohort creation for: {}", cohort.getCohortNumber());
+    public CohortResponseDao createCohort(CohortRequestDao cohortRequestDao) {
+        log.info("Starting cohort creation for: {}", cohortRequestDao.getCohortNumber());
 
-        if (cohort.getCohortNumber() == null || cohort.getCohortNumber().isBlank()){
+        if (cohortRequestDao.getCohortNumber() == null || cohortRequestDao.getCohortNumber().isBlank()){
             throw new IllegalArgumentException("Cohort number must not be null ");
         }
-
-        if (cohortRepository.findByCohortNumber(cohort.getCohortNumber()).isPresent()) {
-            throw new CohortAlreadyExistException("Cohort with this number exists: " + cohort.getCohortNumber());
+        if (cohortRepository.findByCohortNumber(cohortRequestDao.getCohortNumber()).isPresent()) {
+            throw new CohortAlreadyExistException("Cohort with this number exists: " + cohortRequestDao.getCohortNumber());
         }
 
-
-        if (cohort.getStartDate() != null && cohort.getEndDate() != null && cohort.getEndDate().isBefore(cohort.getStartDate())) {
+        if (cohortRequestDao.getStartDate() != null && cohortRequestDao.getEndDate() != null && cohortRequestDao.getEndDate().isBefore(cohortRequestDao.getStartDate())) {
             throw new IllegalArgumentException("End date cannot be before start date");
         }
-
         // Build the cohort without programs and graduation date (to be added by admin later)
-        return cohortRepository.save(Cohort.builder()
-                .cohortNumber(cohort.getCohortNumber())
-                .startDate(cohort.getStartDate())
-                .endDate(cohort.getEndDate())
-                        .programs(new ArrayList<>())
-                .build());
+        Cohort cohort = Cohort.builder()
+                .id(UUID.randomUUID())
+                .cohortNumber(cohortRequestDao.getCohortNumber())
+                .startDate(cohortRequestDao.getStartDate())
+                .endDate(cohortRequestDao.getEndDate())
+                .build();
+
+        Cohort savedCohort = cohortRepository.save(cohort);
+        log.info("Cohort created successfully: {}", savedCohort.getCohortNumber());
+        savedCohort.setCohortNumber(savedCohort.getCohortNumber());
+        return CohortMapper.toCohortResponseDao(savedCohort);
     }
 }
 
