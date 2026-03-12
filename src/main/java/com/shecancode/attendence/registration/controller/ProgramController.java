@@ -2,7 +2,9 @@ package com.shecancode.attendence.registration.controller;
 
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.dao.ProgramRequestDao;
+import com.shecancode.attendence.registration.dao.ProgramResponseDao;
 import com.shecancode.attendence.registration.service.ProgramService;
+import com.shecancode.attendence.registration.util.LoggingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +21,12 @@ public class ProgramController {
     }
 
     @PostMapping("/{cohortNumber}/program")
-    public ResponseEntity<String> CreateProgram(@PathVariable String cohortNumber,
-                                                @RequestBody ProgramRequestDao  requestDao){
+    public ResponseEntity<ProgramResponseDao> CreateProgram(@PathVariable String cohortNumber,
+                                                            @RequestBody ProgramRequestDao  requestDao){
 
-        log.info("program created : {} ",  cohortNumber);
-       programService.createProgram( cohortNumber, requestDao);
-
-       return new ResponseEntity<>("Program created", HttpStatus.ACCEPTED);
+        log.info("program created : {} ", LoggingUtils.sanitizeForLogging(cohortNumber));
+       ProgramResponseDao saveResponse =programService.createProgram( cohortNumber, requestDao);
+       return new ResponseEntity<>(saveResponse, HttpStatus.CREATED);
 
     }
 }

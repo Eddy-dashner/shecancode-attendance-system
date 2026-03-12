@@ -6,6 +6,7 @@ import com.shecancode.attendence.registration.Exception.CohortAlreadyExistExcept
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.dao.CohortRequestDao;
+import com.shecancode.attendence.registration.util.LoggingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +27,13 @@ public class CohortService {
     }
 
     public CohortResponseDao createCohort(CohortRequestDao cohortRequestDao) {
-        log.info("Starting cohort creation for: {}", cohortRequestDao.getCohortNumber());
+        log.info("Starting cohort creation for: {}", LoggingUtils.sanitizeForLogging(cohortRequestDao.getCohortNumber()));
 
         if (cohortRequestDao.getCohortNumber() == null || cohortRequestDao.getCohortNumber().isBlank()){
             throw new IllegalArgumentException("Cohort number must not be null ");
         }
         if (cohortRepository.findByCohortNumber(cohortRequestDao.getCohortNumber()).isPresent()) {
-            throw new CohortAlreadyExistException("Cohort with this number exists: " + cohortRequestDao.getCohortNumber());
+            throw new CohortAlreadyExistException("Cohort with this number exists: " + LoggingUtils.sanitizeForLogging(cohortRequestDao.getCohortNumber()));
         }
 
         if (cohortRequestDao.getStartDate() != null && cohortRequestDao.getEndDate() != null && cohortRequestDao.getEndDate().isBefore(cohortRequestDao.getStartDate())) {
@@ -47,7 +48,7 @@ public class CohortService {
                 .build();
 
         Cohort savedCohort = cohortRepository.save(cohort);
-        log.info("Cohort created successfully: {}", savedCohort.getCohortNumber());
+        log.info("Cohort created successfully: {}", LoggingUtils.sanitizeForLogging(savedCohort.getCohortNumber()));
         savedCohort.setCohortNumber(savedCohort.getCohortNumber());
         return CohortMapper.toCohortResponseDao(savedCohort);
     }

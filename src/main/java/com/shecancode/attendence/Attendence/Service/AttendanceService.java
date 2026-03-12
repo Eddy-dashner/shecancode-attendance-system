@@ -8,6 +8,7 @@ import com.shecancode.attendence.Attendence.dao.BulkAttendanceRequest;
 import com.shecancode.attendence.Attendence.dao.StudentAttendanceRequestDto;
 import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Exception.ResourceNotFoundException;
+import com.shecancode.attendence.registration.Exception.StudentDroppedOutException;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
@@ -68,7 +69,9 @@ public class AttendanceService {
         for (StudentAttendanceRequestDto studentDto : request.getStudents()) {
             Student student = studentMap.get(studentDto.getStudentId());
 
-            if (student == null || student.getStatus() == Status.DROPPED_OUT) continue;
+            if ( student.getStatus() == Status.DROPPED_OUT) {
+                throw new StudentDroppedOutException("Student is dropped out");
+            }
 
             if (!student.getProgram().getId().equals(programId) || !student.getCohort().getId().equals(cohortId)) continue;
 

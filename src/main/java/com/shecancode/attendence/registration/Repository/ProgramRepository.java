@@ -10,5 +10,5 @@ import java.util.UUID;
 public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     Optional<Program> findFirstByProgramName(String programName);
-    List<Program> findByCohort(Cohort cohort);
+    boolean existsByProgramName(String programName);
 }

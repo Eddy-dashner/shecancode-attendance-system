@@ -8,6 +8,7 @@ import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
 import com.shecancode.attendence.Attendence.Repo.ParticipantProgressRepository;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.util.LoggingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

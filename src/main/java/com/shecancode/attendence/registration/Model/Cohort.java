@@ -34,6 +34,6 @@ public class Cohort {
 //    @Column(name = "graduation_date", nullable = false)
 //    private LocalDate graduationDate;
 
-    @OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Program> programs = new ArrayList<>();
+//    @OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Program> programs = new ArrayList<>();
 }

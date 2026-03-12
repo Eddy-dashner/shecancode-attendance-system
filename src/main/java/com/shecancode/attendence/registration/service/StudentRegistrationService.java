@@ -13,6 +13,7 @@ import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
+import com.shecancode.attendence.registration.util.LoggingUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,23 +40,23 @@ public class StudentRegistrationService {
 
         // 1. Basic Email Format Validation
         if (!isValidEmail(studentRequestDao.getEmail())) {
-            log.error("Registration failed: Invalid email format [{}]", studentRequestDao.getEmail());
+            log.error("Registration failed: Invalid email format [{}]", LoggingUtils.sanitizeForLogging(studentRequestDao.getEmail()));
             throw new IllegalArgumentException("Invalid email format");
         }
 
         // 2. Prevent Duplicate Registrations
         if (studentRepository.existsByEmail(studentRequestDao.getEmail())) {
-            log.warn("Registration failed: Email [{}] already exists", studentRequestDao.getEmail());
+            log.warn("Registration failed: Email [{}] already exists", LoggingUtils.sanitizeForLogging(studentRequestDao.getEmail()));
             throw new EmailAlreadyExistException("A student with this email already exists.");
         }
 
         // 3. Lookup Cohort (Source: URL Path Variable)
         Cohort cohort = cohortRepository.findByCohortNumber(cohortNumber)
-                .orElseThrow(() -> new CohortNotFoundException("Registration failed: Cohort [" + cohortNumber + "] not found."));
+                .orElseThrow(() -> new CohortNotFoundException("Registration failed: Cohort [" + LoggingUtils.sanitizeForLogging(cohortNumber) + "] not found."));
 
         // 4. Lookup Program (Source: JSON Body)
         Program program = programsRepository.findFirstByProgramName(studentRequestDao.getProgramName())
-                .orElseThrow(() -> new ProgramNotFoundException("Registration failed: Program [" + studentRequestDao.getProgramName() + "] not found."));
+                .orElseThrow(() -> new ProgramNotFoundException("Registration failed: Program [" + LoggingUtils.sanitizeForLogging(studentRequestDao.getProgramName()) + "] not found."));
 
         // 5. Build Student Entity with Relationships
         Student student = Student.builder()
@@ -74,7 +75,9 @@ public class StudentRegistrationService {
         // 6. Persist to Database
         Student savedStudent = studentRepository.save(student);
         log.info("Student successfully registered: {} assigned to {} in {}",
-                savedStudent.getEmail(), cohort.getCohortNumber(), program.getProgramName());
+                LoggingUtils.sanitizeForLogging(savedStudent.getEmail()), 
+                LoggingUtils.sanitizeForLogging(cohort.getCohortNumber()), 
+                LoggingUtils.sanitizeForLogging(program.getProgramName()));
 
         // 7. Convert to Response DTO
         return StudentMapper.toDTO(savedStudent);
