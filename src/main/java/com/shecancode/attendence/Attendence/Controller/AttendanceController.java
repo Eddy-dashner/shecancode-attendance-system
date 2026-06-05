@@ -6,7 +6,10 @@ import com.shecancode.attendence.Attendence.dao.BulkAttendanceRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+<<<<<<< HEAD
 import org.springframework.security.access.prepost.PreAuthorize;
+=======
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +27,10 @@ public class AttendanceController {
     }
 
     @PostMapping
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+=======
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
     public ResponseEntity<List<AttendanceResponse>> recordBulkAttendance(
             @PathVariable UUID programId,
             @PathVariable UUID cohortId,
@@ -42,7 +48,10 @@ public class AttendanceController {
     }
 
     @PatchMapping
+<<<<<<< HEAD
     @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+=======
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
     public ResponseEntity<List<AttendanceResponse>> updateBulkAttendance(
             @PathVariable UUID programId,
             @PathVariable UUID cohortId,

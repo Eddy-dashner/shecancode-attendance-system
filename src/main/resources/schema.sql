@@ -1,12 +1,19 @@
 -- ==========================================
 -- 1. DROP TABLES IN ORDER (Children first)
 -- ==========================================
+<<<<<<< HEAD
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS participant CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS program CASCADE;
 DROP TABLE IF EXISTS cohort CASCADE;
 DROP TABLE IF EXISTS app_user CASCADE;
+=======
+-- We use CASCADE to ensure any remaining constraints are cleared
+DROP TABLE IF EXISTS student CASCADE;
+DROP TABLE IF EXISTS program CASCADE;
+DROP TABLE IF EXISTS cohort CASCADE;
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 
 -- ==========================================
 -- 2. CREATE COHORT (Parent)
@@ -87,6 +94,7 @@ CREATE TABLE participant(
                          consecutive_absences VARCHAR(255),
                          last_updated TIMESTAMP
 
+<<<<<<< HEAD
 );
 -- ==========================================
 -- 6. CREATE APP_USER (Authentication / RBAC)
@@ -100,3 +108,6 @@ CREATE TABLE app_user (
     enabled  BOOLEAN      NOT NULL DEFAULT TRUE,
     PRIMARY KEY (user_id)
 );
+=======
+);
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4

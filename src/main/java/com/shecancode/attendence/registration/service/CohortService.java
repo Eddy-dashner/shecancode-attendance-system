@@ -11,9 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+<<<<<<< HEAD
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+=======
+import java.util.UUID;
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 
 @Slf4j
 @Service
@@ -54,12 +58,15 @@ public class CohortService {
         savedCohort.setCohortNumber(savedCohort.getCohortNumber());
         return CohortMapper.toCohortResponseDao(savedCohort);
     }
+<<<<<<< HEAD
 
     public List<CohortResponseDao> getAllCohorts() {
         return cohortRepository.findAll().stream()
                 .map(CohortMapper::toCohortResponseDao)
                 .collect(Collectors.toList());
     }
+=======
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 }
 
 

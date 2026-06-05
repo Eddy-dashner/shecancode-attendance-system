@@ -45,6 +45,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+<<<<<<< HEAD
     org.springframework.jdbc.datasource.init: DEBUG
     org.springframework.security: DEBUG   # remove in production
 
@@ -62,3 +63,6 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+=======
+    org.springframework.jdbc.datasource.init: DEBUG
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4

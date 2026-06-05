@@ -35,7 +35,11 @@ class ProgramServiceTest {
 
     private Program program;
 
+<<<<<<< HEAD
     private final UUID cohortId = UUID.randomUUID();
+=======
+    private UUID cohortId = UUID.randomUUID();
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 
 
 

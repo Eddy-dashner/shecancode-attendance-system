@@ -82,6 +82,7 @@ INSERT INTO participant(
 values (RANDOM_UUID(),'550e8400-e29b-41d4-a716-446655440011',
         '550e8400-e29b-41d4-a716-446655440010',
         10, 10, 'green',
+<<<<<<< HEAD
         0, CURRENT_DATE);
 -- ==========================================
 -- SEED USERS  (RBAC bootstrap)
@@ -96,3 +97,6 @@ INSERT INTO app_user (user_id, username, password, full_name, role, enabled) VAL
     (RANDOM_UUID(), 'trainer1',
      '$2a$12$Y1U6hXVhGmWBqLBFXBJLlOTMPRR/OjNR5sC4kqKSigjGFSmH/tlOu',
      'Default Trainer', 'TRAINER', TRUE);
+=======
+        0, CURRENT_DATE);
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
