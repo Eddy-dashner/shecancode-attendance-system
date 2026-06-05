@@ -3,29 +3,20 @@ package com.shecancode.attendence.registration.Exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-=======
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.time.LocalDateTime;
-<<<<<<< HEAD
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-=======
-
-@RestControllerAdvice
-public class GlobalExceptionHandler {
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
         String sanitizedMessage = StringEscapeUtils.escapeHtml4(ex.getMessage());
@@ -51,7 +42,6 @@ public class GlobalExceptionHandler {
                 sanitizedUri);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-<<<<<<< HEAD
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
@@ -99,6 +89,4 @@ public class GlobalExceptionHandler {
                 StringEscapeUtils.escapeHtml4(request.getRequestURI()));
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-=======
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 }
