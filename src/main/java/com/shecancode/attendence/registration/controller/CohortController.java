@@ -1,6 +1,5 @@
 package com.shecancode.attendence.registration.controller;
 
-import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.dao.CohortRequestDao;
 import com.shecancode.attendence.registration.dao.CohortResponseDao;
 import com.shecancode.attendence.registration.service.CohortService;
@@ -13,12 +12,21 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
+
+
 @RequestMapping("/api/v1/cohort")
+
 public class CohortController {
     private final  CohortService cohortService;
 
     public CohortController(CohortService cohortService) {
         this.cohortService = cohortService;
+    }
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllCohorts() {
+        log.info("Retrieving all cohorts");
+        return ResponseEntity.ok(cohortService.getAllCohorts());
     }
 
     @PostMapping

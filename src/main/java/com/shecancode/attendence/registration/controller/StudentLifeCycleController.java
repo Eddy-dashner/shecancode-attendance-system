@@ -2,7 +2,9 @@ package com.shecancode.attendence.registration.controller;
 import com.shecancode.attendence.registration.service.StudentLifeCycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;

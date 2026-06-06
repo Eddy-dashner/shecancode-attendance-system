@@ -6,7 +6,11 @@ info:
     Includes Cohort, Program, and Enrollment management.
   version: 1.0.0
 servers:
+<<<<<<< HEAD
   - url: http://localhost:8080/swagger-ui/index.html
+=======
+  - url: http://localhost:8080
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
 
 tags:
   - name: Administration
@@ -36,6 +40,7 @@ paths:
                 $ref: '#/components/schemas/CohortResponseDao'
 
   # --- PROGRAM MANAGEMENT ---
+<<<<<<< HEAD
   # Fixed: Changed from plural "programs" to singular "program" to match controller
   #creating a program within a cohort
   /api/v1/cohorts/{cohortNumber}/program:
@@ -43,6 +48,14 @@ paths:
       tags: [Administration]
       summary: Create a new program within a cohort
       operationId: CreateProgram
+=======
+  # Standard practice: /cohorts/{id}/programs
+  /api/v1/cohorts/{cohortNumber}/programs:
+    post:
+      tags: [Administration]
+      summary: Create a new program within a cohort
+      operationId: createProgram
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
       parameters:
         - name: cohortNumber
           in: path
@@ -59,6 +72,7 @@ paths:
       responses:
         '201':
           description: Program created successfully
+<<<<<<< HEAD
           content:
             application/json:
               schema:
@@ -71,6 +85,15 @@ paths:
       tags: [Student Registration]
       summary: Register a Student
       operationId: addStudent
+=======
+
+  # --- STUDENT REGISTRATION ---
+  /api/v1/students/{cohortNumber}/{programName}:
+    post:
+      tags: [Student Registration]
+      summary: Register a Student
+      operationId: registerStudent
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
       parameters:
         - name: cohortNumber
           in: path
@@ -78,6 +101,15 @@ paths:
           schema:
             type: string
             example: "Cohort-18"
+<<<<<<< HEAD
+=======
+        - name: programName
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "BACKEND"
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
       requestBody:
         required: true
         content:
@@ -137,6 +169,7 @@ components:
           type: string
           format: date
 
+<<<<<<< HEAD
     # Added missing ProgramResponseDao schema
     ProgramResponseDao:
       type: object
@@ -148,6 +181,8 @@ components:
         programEndDate: { type: string, format: date }
         cohortNumber: { type: string }
 
+=======
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
     StudentRequestDao:
       type: object
       required: [studentFirstName, studentLastName, email, phoneNumber]
@@ -180,4 +215,8 @@ components:
         cohortNumber: { type: string }
         programName: { type: string }
         estimateGraduationDate: { type: string, format: date }
+<<<<<<< HEAD
         daysRemainingToGraduate: { type: integer }
+=======
+        daysRemainingToGraduate: { type: integer }
+>>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4

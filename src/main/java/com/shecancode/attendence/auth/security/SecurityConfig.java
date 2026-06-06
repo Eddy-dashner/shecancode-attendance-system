@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .requestMatchers(PUBLIC_URLS).permitAll()
 
                 // ── Cohort management: ADMIN only ───────────────────────────
-                .requestMatchers("/api/v1/cohorts/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/cohorts/**").hasAuthority("ROLE_ADMIN")
 
                 // ── Program management: ADMIN only ──────────────────────────
                 .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")

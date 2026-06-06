@@ -12,6 +12,8 @@ import com.shecancode.attendence.registration.util.LoggingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -19,7 +21,8 @@ import java.util.UUID;
 public class ProgramService {
     private final ProgramRepository programRepository;
 
-    private CohortRepository cohortRepository;
+    private final CohortRepository cohortRepository;
+
 
     public ProgramService(ProgramRepository programRepository, CohortRepository cohortRepository) {
         this.programRepository = programRepository;
@@ -28,7 +31,7 @@ public class ProgramService {
 
     /**
      * @param cohortNumber
-     * @param program
+     * @param programRequest
      * @return
      */
     public ProgramResponseDao createProgram(String cohortNumber, ProgramRequestDao programRequest){
@@ -65,4 +68,10 @@ public class ProgramService {
 
     }
 
+
+    public List<ProgramResponseDao> getAllPrograms() {
+        return programRepository.findAll().stream()
+                .map(ProgramMapper::ToResponseDao)
+                .toList();
+    }
 }

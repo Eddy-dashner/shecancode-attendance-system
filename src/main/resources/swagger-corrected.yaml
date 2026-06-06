@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: SheCanCODE Student Management System
+  description: >
+    API for Administration (Setup) and Student Registration.
+    Includes Cohort, Program, and Enrollment management.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Administration
+    description: Super Admin setup for Cohorts and Programs
+  - name: Student Registration
+    description: Student onboarding into specific tracks
+
+paths:
+  # --- COHORT MANAGEMENT ---
+  /api/v1/cohort:
+    post:
+      tags: [Administration]
+      summary: Create a new cohort
+      operationId: createCohort
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CohortRequestDao'
+      responses:
+        '201':
+          description: Cohort created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CohortResponseDao'
+
+  # --- PROGRAM MANAGEMENT ---
+  # Fixed: Changed from plural "programs" to singular "program" to match controller
+  /api/v1/cohorts/{cohortNumber}/program:
+    post:
+      tags: [Administration]
+      summary: Create a new program within a cohort
+      operationId: CreateProgram
+      parameters:
+        - name: cohortNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "Cohort-18"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramRequestDao'
+      responses:
+        '201':
+          description: Program created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramResponseDao'
+
+  # --- STUDENT REGISTRATION ---
+  # Fixed: Removed {programName} to match controller implementation
+  /api/v1/students/{cohortNumber}:
+    post:
+      tags: [Student Registration]
+      summary: Register a Student
+      operationId: addStudent
+      parameters:
+        - name: cohortNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "Cohort-18"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentRequestDao'
+      responses:
+        '201':
+          description: Student successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponseDao'
+        '400':
+          description: Validation failed
+        '422':
+          description: Cohort or Program not found
+
+components:
+  schemas:
+    CohortRequestDao:
+      type: object
+      required: [cohortNumber, startDate, endDate]
+      properties:
+        cohortNumber:
+          type: string
+          example: "Cohort-18"
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    CohortResponseDao:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        cohortNumber: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+
+    ProgramRequestDao:
+      type: object
+      required: [programName, programDuration, programStartDate, programEndDate]
+      properties:
+        programName:
+          type: string
+          example: "BACKEND"
+        programDuration:
+          type: integer
+          example: 180
+        programStartDate:
+          type: string
+          format: date
+        programEndDate:
+          type: string
+          format: date
+
+    # Added missing ProgramResponseDao schema
+    ProgramResponseDao:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        programName: { type: string }
+        programDuration: { type: integer }
+        programStartDate: { type: string, format: date }
+        programEndDate: { type: string, format: date }
+        cohortNumber: { type: string }
+
+    StudentRequestDao:
+      type: object
+      required: [studentFirstName, studentLastName, email, phoneNumber]
+      properties:
+        studentFirstName:
+          type: string
+          example: "Bob"
+        studentLastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "bob@example.com"
+        phoneNumber:
+          type: string
+          example: "+250788112233"
+        homeAddress:
+          type: string
+        currentOccupation:
+          type: string
+
+    StudentResponseDao:
+      type: object
+      properties:
+        studentId: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string }
+        status: { type: string, example: "ACTIVE" }
+        cohortNumber: { type: string }
+        programName: { type: string }
+        estimateGraduationDate: { type: string, format: date }
+        daysRemainingToGraduate: { type: integer }
