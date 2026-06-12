@@ -28,7 +28,7 @@ public class OutboxEventFactory {
                 .programId(attendance.getProgram().getId())
                 .cohortId(attendance.getCohort().getId())
                 .attendanceStatus(attendance.getAttendanceStatus())
-                .attendanceDate(attendance.getAttendanceRecordedDate())
+                .attendanceDate(attendance.getAttendanceRecordedDate().toLocalDate())
                 .checkInTime(attendance.getCheckInTime())
                 .timestamp(Instant.now())
                 .build();

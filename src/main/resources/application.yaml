@@ -2,62 +2,46 @@ spring:
   application:
     name: shecancode-attendance-system
 
-  # 1. H2 DATABASE CONFIGURATION
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
-
-  # 2. DATASOURCE CONFIGURATION
   datasource:
-    url: jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    username: test
+    url: jdbc:postgresql://localhost:5432/shecancode
+    username: postgres
     password: password
-    driver-class-name: org.h2.Driver
+    driver-class-name: org.postgresql.Driver
 
-  # 3. SQL INITIALIZATION (Controls schema.sql and data.sql)
-  sql:
-    init:
-      mode: always
-      continue-on-error: false # App will fail if data.sql has a typo (good for debugging)
-
-  # 4. JPA / HIBERNATE CONFIGURATION
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    show-sql: true
     hibernate:
-      # 'none' because we are using schema.sql to define tables
-      # Change to 'update' if you want Hibernate to fix missing columns
-      ddl-auto: none
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-        # Maps studentId (Java) to student_id (SQL)
-        physical_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-    # CRITICAL: This ensures data.sql runs AFTER Hibernate is ready
-    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: never
 
-# 5. LOGGING (To see why data might not be inserting)
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.jdbc.datasource.init: DEBUG
+  kafka:
+    bootstrap-servers: shecancode-kafka:29092
+    consumer:
+      group-id: attendance-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-# 6. JWT CONFIGURATION
-# IMPORTANT: Replace the secret with a strong random 256-bit key in production.
-# Generate one with: openssl rand -hex 32
 app:
   jwt:
-    secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-    expiration-ms: 86400000   # 24 hours
+    secret: change-this-to-a-long-secure-secret-key-at-least-32-bytes
+    expiration-ms: 86400000
 
-# 7. SPRINGDOC / SWAGGER — expose the JWT Bearer input in Swagger UI
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG

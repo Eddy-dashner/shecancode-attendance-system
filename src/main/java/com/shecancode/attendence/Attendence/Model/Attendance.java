@@ -10,7 +10,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -56,7 +55,7 @@ public class Attendance {
     private String remarks;
 
     @Column(name = "attendance_recorded_date", nullable = false)
-    private LocalDate attendanceRecordedDate;
+    private LocalDateTime attendanceRecordedDate;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
