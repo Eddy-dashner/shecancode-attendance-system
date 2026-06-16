@@ -1,12 +1,9 @@
 package com.shecancode.attendence.Attendence.Event;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,24 +19,27 @@ public class OutboxEvent {
 
     @Id
     private UUID id;
-    private String eventType;
-    private String aggregateType;
+
+    @Enumerated(EnumType.STRING)
+    private EventType eventType;
+
+    @Enumerated(EnumType.STRING)
+    private AggregateType aggregateType;
 
     private UUID aggregateId;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "payload", columnDefinition = "jsonb")
-    private Object payload;
+    @Column(columnDefinition = "jsonb")
+    private String payload;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OutboxStatus status;
 
+    @CreationTimestamp
     private Instant createdAt;
 
+    @UpdateTimestamp
     private Instant updatedAt;
 
     private Instant processedAt;
-
-
-
 
 }

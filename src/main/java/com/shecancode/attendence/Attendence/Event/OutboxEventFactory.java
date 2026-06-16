@@ -3,7 +3,6 @@ package com.shecancode.attendence.Attendence.Event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shecancode.attendence.Attendence.Model.Attendance;
-import lombok.*;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -19,7 +18,7 @@ public class OutboxEventFactory {
         this.objectMapper = objectMapper;
     }
 
-    public OutboxEvent buildOutboxEvent(Attendance attendance){
+    public OutboxEvent createAttendanceOutboxEvent(Attendance attendance){
 
         AttendanceEvent event = AttendanceEvent.builder()
                 .eventId(UUID.randomUUID())
@@ -28,21 +27,19 @@ public class OutboxEventFactory {
                 .programId(attendance.getProgram().getId())
                 .cohortId(attendance.getCohort().getId())
                 .attendanceStatus(attendance.getAttendanceStatus())
-                .attendanceDate(attendance.getAttendanceRecordedDate().toLocalDate())
+                .attendanceDate(attendance.getAttendanceRecordedDate())
                 .checkInTime(attendance.getCheckInTime())
-                .timestamp(Instant.now())
                 .build();
 
         return OutboxEvent.builder()
                 .id(UUID.randomUUID())
-                .aggregateType("ATTENDANCE")
+                .aggregateType(AggregateType.ATTENDANCE)
                 .aggregateId(attendance.getAttendanceId())
-                .eventType("ATTENDANCE_RECORDED")
+                .eventType(EventType.ATTENDANCE_RECORDED)
                 .payload(convertToJson(event))
-                .status("PENDING")
+                .status(OutboxStatus.PENDING)
                 .createdAt(Instant.now())
                 .build();
-
     }
 
     private String convertToJson(AttendanceEvent event) {
