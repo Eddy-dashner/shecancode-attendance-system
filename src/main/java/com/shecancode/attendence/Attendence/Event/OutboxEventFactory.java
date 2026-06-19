@@ -33,12 +33,13 @@ public class OutboxEventFactory {
 
         return OutboxEvent.builder()
                 .id(UUID.randomUUID())
-                .aggregateType(AggregateType.ATTENDANCE)
+//                .aggregateType(AggregateType.ATTENDANCE)
                 .aggregateId(attendance.getAttendanceId())
                 .eventType(EventType.ATTENDANCE_RECORDED)
                 .payload(convertToJson(event))
                 .status(OutboxStatus.PENDING)
                 .createdAt(Instant.now())
+                .processedAt(Instant.now())
                 .build();
     }
 
@@ -48,5 +49,30 @@ public class OutboxEventFactory {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to convert event to JSON", e);
         }
+    }
+    public OutboxEvent createAttendanceUpdatedEvent(
+            Attendance attendance){
+        AttendanceEvent event = AttendanceEvent.builder()
+                .eventId(UUID.randomUUID())
+                .attendanceId(attendance.getAttendanceId())
+                .studentId(attendance.getStudent().getId())
+                .programId(attendance.getProgram().getId())
+                .cohortId(attendance.getCohort().getId())
+                .attendanceStatus(attendance.getAttendanceStatus())
+                .attendanceDate(attendance.getAttendanceRecordedDate())
+                .checkInTime(attendance.getCheckInTime())
+                .build();
+
+        return OutboxEvent.builder()
+                .id(UUID.randomUUID())
+//                .aggregateType(AggregateType.ATTENDANCE)
+                .aggregateId(attendance.getAttendanceId())
+                .eventType(EventType.ATTENDANCE_UPDATED)
+                .payload(convertToJson(event))
+                .status(OutboxStatus.PENDING)
+                .processedAt(Instant.now())
+
+                .createdAt(Instant.now())
+                .build();
     }
 }

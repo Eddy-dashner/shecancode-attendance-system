@@ -1,5 +1,8 @@
 package com.shecancode.attendence.Attendence.Service;
 
+import com.shecancode.attendence.Attendence.Event.OutboxEvent;
+import com.shecancode.attendence.Attendence.Event.OutboxEventFactory;
+import com.shecancode.attendence.Attendence.Event.OutboxRepository;
 import com.shecancode.attendence.Attendence.Mapper.AttendanceMapper;
 import com.shecancode.attendence.Attendence.Model.Attendance;
 import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
@@ -31,14 +34,17 @@ public class AttendanceService {
     private final ProgramRepository programRepository;
     private final CohortRepository cohortRepository;
     private final ParticipantService participantService;
-
+    private final OutboxRepository outboxRepository;
+    private final OutboxEventFactory outboxEventFactory;
     public AttendanceService(AttendanceRepository attendanceRepository, StudentRepository studentRepository,
-                             ProgramRepository programRepository, CohortRepository cohortRepository, ParticipantService participantService) {
+                             ProgramRepository programRepository, CohortRepository cohortRepository, ParticipantService participantService, OutboxRepository outboxRepository, OutboxEventFactory outboxEventFactory) {
         this.attendanceRepository = attendanceRepository;
         this.studentRepository = studentRepository;
         this.programRepository = programRepository;
         this.cohortRepository = cohortRepository;
         this.participantService = participantService;
+        this.outboxRepository = outboxRepository;
+        this.outboxEventFactory = outboxEventFactory;
     }
 
     @Transactional
@@ -56,7 +62,18 @@ public class AttendanceService {
                 .map(StudentAttendanceRequestDto::getStudentId)
                 .toList();
 
-        Map<UUID, Student> studentMap = studentRepository.findAllById(studentIds).stream()
+        log.info("Requested IDs: {}", studentIds);
+
+        List<Student> foundStudents = studentRepository.findAllById(studentIds);
+
+        log.info("Found students count: {}", foundStudents.size());
+
+        log.info("Found IDs: {}",
+                foundStudents.stream()
+                        .map(Student::getId)
+                        .toList());
+
+        Map<UUID, Student> studentMap = foundStudents.stream()
                 .collect(Collectors.toMap(Student::getId, s -> s));
 
         // 3️⃣ Check for duplicates
@@ -90,6 +107,11 @@ public class AttendanceService {
         // 7️⃣ Bulk Save
         List<Attendance> savedAttendances = attendanceRepository.saveAll(attendancesToSave);
 
+        //saving event in outbox
+        List<OutboxEvent> events = savedAttendances.stream()
+                .map(outboxEventFactory::createAttendanceOutboxEvent)
+                .toList();
+        outboxRepository.saveAll(events);
 
         savedAttendances.stream()
                 .map(Attendance::getStudent)
@@ -136,6 +158,16 @@ public class AttendanceService {
 
         List<Attendance> saved = attendanceRepository.saveAll(toUpdate);
 
+        if (toUpdate.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<OutboxEvent> events =
+                saved.stream()
+                        .map(outboxEventFactory::createAttendanceUpdatedEvent)
+                        .toList();
+
+        outboxRepository.saveAll(events);
         saved.stream()
                 .map(Attendance::getStudent)
                 .distinct()

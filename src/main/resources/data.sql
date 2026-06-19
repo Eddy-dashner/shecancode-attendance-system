@@ -15,5 +15,5 @@ VALUES ('550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-4466554
 
 INSERT INTO app_user (user_id, username, password, full_name, role, enabled)
 VALUES
-    ('93c745fb-63d5-4a70-9a0e-a71f97cdd50e', 'admin', '$2a$10$I94yRVA9b8yUD67Pcn9oJOTPl4znIx1IL/SGhPyHirg5k2/Exjg.y', 'System Administrator', 'ADMIN', TRUE),
-    ('93c745fb-63d5-4a70-9a0e-a71f97cdd50b', 'trainer1', '$2a$12$Y1U6hXVhGmWBqLBFXBJLlOTMPRR/OjNR5sC4kqKSigjGFSmH/tlOu', 'Default Trainer', 'TRAINER', TRUE);
+    ('93c745fb-63d5-4a70-9a0e-a71f97cdd50e', 'admin', '$2a$10$88FN2rob70SNlIdnOjGXa.QP8b2rPtyUFhx3ickUE62kSDP.x0.ha', 'System Administrator', 'ADMIN', TRUE),
+    ('550e8400-e29b-41d4-a716-446655440010', 'trainer1', '$2a$10$88FN2rob70SNlIdnOjGXa.QP8b2rPtyUFhx3ickUE62kSDP.x0.ha', 'Default Trainer', 'TRAINER', TRUE);
