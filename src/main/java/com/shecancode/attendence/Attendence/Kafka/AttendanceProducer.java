@@ -15,26 +15,24 @@ public class AttendanceProducer {
 
     private final KafkaTemplate<String, AttendanceEvent> kafkaTemplate;
 
-    public void sendAttendanceEvent(AttendanceEvent event) {
-        log.info("preparing to publish attendance event for student ID", event.getStudentId());
+    public CompletableFuture<SendResult<String, AttendanceEvent>>
+    sendAttendanceEvent(AttendanceEvent event) {
 
-        // Use the studentId as the message key to guarantee order retention per student across partitions
-        String messageKey = String.valueOf(event.getStudentId());
+        String messageKey = event.getStudentId().toString();
 
-        CompletableFuture<SendResult<String, AttendanceEvent>> future =
-                kafkaTemplate.send(KafkaTopicConfig.ATTENDANCE_TOPIC, messageKey, event);
-
-        // Handle the broker confirmation asynchronously
-        future.whenComplete((result, exception) -> {
-            if (exception == null) {
-                log.info("Successfully produced event to topic [{}] | Partition: {} | Offset: {}",
+        return kafkaTemplate.send(
+                KafkaTopicConfig.ATTENDANCE_TOPIC,
+                messageKey,
+                event
+        ).whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Successfully produced event to topic [{}], Partition: {}, Offset: {}",
                         result.getRecordMetadata().topic(),
                         result.getRecordMetadata().partition(),
                         result.getRecordMetadata().offset());
             } else {
-                log.error("Failed to deliver message to Kafka broker due to: {}", exception.getMessage(), exception);
+                log.error("Failed to deliver message to topic [{}]", KafkaTopicConfig.ATTENDANCE_TOPIC, ex);
             }
         });
-
     }
 }

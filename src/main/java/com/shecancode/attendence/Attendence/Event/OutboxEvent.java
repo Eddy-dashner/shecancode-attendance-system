@@ -19,29 +19,41 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OutboxEvent {
 
+
     @Id
     private UUID id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EventType eventType;
 
-//    @Enumerated(EnumType.STRING)
-//    private AggregateType aggregateType;
+    // Optional if you later support multiple aggregates
+    // @Enumerated(EnumType.STRING)
+    // @Column(nullable = false)
+    // private AggregateType aggregateType;
 
+    @Column(nullable = false)
     private UUID aggregateId;
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
     private String payload;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OutboxStatus status;
 
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @UpdateTimestamp
+    @Column(nullable = false)
     private Instant updatedAt;
 
+    /**
+     * Null until successfully published to Kafka.
+     */
     private Instant processedAt;
 
 }

@@ -18,7 +18,26 @@ public class OutboxEventFactory {
         this.objectMapper = objectMapper;
     }
 
-    public OutboxEvent createAttendanceOutboxEvent(Attendance attendance){
+    /**
+     * Creates an OutboxEvent for a newly recorded attendance.
+     */
+    public OutboxEvent createAttendanceOutboxEvent(Attendance attendance) {
+        return buildOutboxEvent(attendance, EventType.ATTENDANCE_RECORDED);
+    }
+
+    /**
+     * Creates an OutboxEvent when attendance is updated.
+     */
+    public OutboxEvent createAttendanceUpdatedEvent(Attendance attendance) {
+        return buildOutboxEvent(attendance, EventType.ATTENDANCE_UPDATED);
+    }
+
+    /**
+     * Builds the OutboxEvent.
+     */
+    private OutboxEvent buildOutboxEvent(
+            Attendance attendance,
+            EventType eventType) {
 
         AttendanceEvent event = AttendanceEvent.builder()
                 .eventId(UUID.randomUUID())
@@ -29,50 +48,29 @@ public class OutboxEventFactory {
                 .attendanceStatus(attendance.getAttendanceStatus())
                 .attendanceDate(attendance.getAttendanceRecordedDate())
                 .checkInTime(attendance.getCheckInTime())
+                .timestamp(Instant.now())
                 .build();
 
         return OutboxEvent.builder()
                 .id(UUID.randomUUID())
-//                .aggregateType(AggregateType.ATTENDANCE)
+                //.aggregateType(AggregateType.ATTENDANCE)
                 .aggregateId(attendance.getAttendanceId())
-                .eventType(EventType.ATTENDANCE_RECORDED)
+                .eventType(eventType)
                 .payload(convertToJson(event))
                 .status(OutboxStatus.PENDING)
-                .createdAt(Instant.now())
-                .processedAt(Instant.now())
+                // createdAt is set automatically by @CreationTimestamp
+                // processedAt remains null until successfully published
                 .build();
     }
 
+    /**
+     * Converts AttendanceEvent to JSON.
+     */
     private String convertToJson(AttendanceEvent event) {
         try {
             return objectMapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to convert event to JSON", e);
+            throw new RuntimeException("Failed to convert AttendanceEvent to JSON.", e);
         }
-    }
-    public OutboxEvent createAttendanceUpdatedEvent(
-            Attendance attendance){
-        AttendanceEvent event = AttendanceEvent.builder()
-                .eventId(UUID.randomUUID())
-                .attendanceId(attendance.getAttendanceId())
-                .studentId(attendance.getStudent().getId())
-                .programId(attendance.getProgram().getId())
-                .cohortId(attendance.getCohort().getId())
-                .attendanceStatus(attendance.getAttendanceStatus())
-                .attendanceDate(attendance.getAttendanceRecordedDate())
-                .checkInTime(attendance.getCheckInTime())
-                .build();
-
-        return OutboxEvent.builder()
-                .id(UUID.randomUUID())
-//                .aggregateType(AggregateType.ATTENDANCE)
-                .aggregateId(attendance.getAttendanceId())
-                .eventType(EventType.ATTENDANCE_UPDATED)
-                .payload(convertToJson(event))
-                .status(OutboxStatus.PENDING)
-                .processedAt(Instant.now())
-
-                .createdAt(Instant.now())
-                .build();
     }
 }

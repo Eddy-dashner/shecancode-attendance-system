@@ -16,15 +16,17 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AttendanceEvent {
 
+    private int version;
+
     private UUID eventId;
 
     private UUID attendanceId;
 
     private UUID studentId;
 
-    private UUID programId;
-
     private UUID cohortId;
+
+    private UUID programId;
 
     // 1. Formats as "yyyy-MM-dd" (e.g., "2026-05-28")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
