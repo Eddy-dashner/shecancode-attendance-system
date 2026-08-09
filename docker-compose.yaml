@@ -7,18 +7,19 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: attendance_db
+      POSTGRES_DB: shecancode
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - shecancode-network
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d attendance_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shecancode"]
+      interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - attendance-network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -27,79 +28,70 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - attendance-network
+      - shecancode-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: shecancode-kafka
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CUSTOM_HOST:PLAINTEXT,INSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: CUSTOM_HOST://localhost:9092,INSIDE://kafka:29092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: shecancode-zookeeper:2181
+
+      # Two listeners: internal (docker) + external (your machine)
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://shecancode-kafka:29092,PLAINTEXT_HOST://localhost:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     networks:
-      - attendance-network
+      - shecancode-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
-  kafka-ui:
-    image: obsidiandynamics/kafdrop:latest
-    container_name: shecancode-kafka-ui
-    depends_on:
-      - kafka
-    ports:
-      - "9000:9000"
-    environment:
-      KAFKA_BROKERCONNECT: "kafka:29092"
-    networks:
-      - attendance-network
-
-  # ── ADDED: APPLICATION CONTAINER CONFIGURED VIA YOUR PROPERTIES ─────────
   attendance-app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: shecancode-attendance-system:latest
-    container_name: attendance-app
+    container_name: shecancode-attendance-app
     ports:
-      - "8080:8080"
+      - "8085:8080"
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
-      # Matches section 1 & 2 of your application.yaml
-      SPRING_DATASOURCE_URL: jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shecancode
+      SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
-
-      # Matches section 3 & 4 of your application.yaml
-      SPRING_SQL_INIT_MODE: always
-      SPRING_SQL_INIT_CONTINUE_ON_ERROR: "false"
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
-      SPRING_JPA_PROPERTIES_HIBERNATE_PHYSICAL_STRATEGY: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-      SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
-
-      # Matches section 5 & 6 of your application.yaml
-      LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC_DATASOURCE_INIT: DEBUG
-      APP_JWT_SECRET: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+      APP_JWT_SECRET: change-this-to-a-long-secure-secret-key-at-least-32-bytes
       APP_JWT_EXPIRATION_MS: 86400000
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: shecancode-kafka:29092
     networks:
-      - attendance-network
+      - shecancode-network
+    restart: unless-stopped
 
 volumes:
   pgdata:
 
 networks:
-  attendance-network:
+  shecancode-network:
     driver: bridge

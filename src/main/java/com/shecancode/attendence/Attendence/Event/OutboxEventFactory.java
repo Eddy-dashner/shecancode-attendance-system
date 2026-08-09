@@ -3,7 +3,6 @@ package com.shecancode.attendence.Attendence.Event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shecancode.attendence.Attendence.Model.Attendance;
-import lombok.*;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -19,7 +18,26 @@ public class OutboxEventFactory {
         this.objectMapper = objectMapper;
     }
 
-    public OutboxEvent buildOutboxEvent(Attendance attendance){
+    /**
+     * Creates an OutboxEvent for a newly recorded attendance.
+     */
+    public OutboxEvent createAttendanceOutboxEvent(Attendance attendance) {
+        return buildOutboxEvent(attendance, EventType.ATTENDANCE_RECORDED);
+    }
+
+    /**
+     * Creates an OutboxEvent when attendance is updated.
+     */
+    public OutboxEvent createAttendanceUpdatedEvent(Attendance attendance) {
+        return buildOutboxEvent(attendance, EventType.ATTENDANCE_UPDATED);
+    }
+
+    /**
+     * Builds the OutboxEvent.
+     */
+    private OutboxEvent buildOutboxEvent(
+            Attendance attendance,
+            EventType eventType) {
 
         AttendanceEvent event = AttendanceEvent.builder()
                 .eventId(UUID.randomUUID())
@@ -35,21 +53,24 @@ public class OutboxEventFactory {
 
         return OutboxEvent.builder()
                 .id(UUID.randomUUID())
-                .aggregateType("ATTENDANCE")
+                //.aggregateType(AggregateType.ATTENDANCE)
                 .aggregateId(attendance.getAttendanceId())
-                .eventType("ATTENDANCE_RECORDED")
+                .eventType(eventType)
                 .payload(convertToJson(event))
-                .status("PENDING")
-                .createdAt(Instant.now())
+                .status(OutboxStatus.PENDING)
+                // createdAt is set automatically by @CreationTimestamp
+                // processedAt remains null until successfully published
                 .build();
-
     }
 
+    /**
+     * Converts AttendanceEvent to JSON.
+     */
     private String convertToJson(AttendanceEvent event) {
         try {
             return objectMapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to convert event to JSON", e);
+            throw new RuntimeException("Failed to convert AttendanceEvent to JSON.", e);
         }
     }
 }
