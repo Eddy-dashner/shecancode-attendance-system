@@ -1,6 +1,8 @@
 package com.shecancode.attendence.registration.service;
 
 import com.shecancode.attendence.registration.Enum.Status;
+import com.shecancode.attendence.registration.Exception.StudentDroppedOutException;
+import com.shecancode.attendence.registration.Exception.StudentNotFoundException;
 import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
@@ -25,10 +27,10 @@ public class StudentLifeCycleService {
     @Transactional
     public void markDropout(UUID studentId) {
         Student student = repository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new StudentNotFoundException("Student not found: " + studentId));
 
         if (student.getStatus() == Status.DROPPED_OUT) {
-            throw new IllegalArgumentException("Student is already DROPPED_OUT");
+            throw new StudentDroppedOutException("Student is already DROPPED_OUT");
         }
 
         student.setStatus(Status.DROPPED_OUT);

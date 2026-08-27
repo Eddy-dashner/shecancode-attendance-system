@@ -86,6 +86,10 @@ public class AttendanceService {
         for (StudentAttendanceRequestDto studentDto : request.getStudents()) {
             Student student = studentMap.get(studentDto.getStudentId());
 
+            if (student == null) {
+                throw new ResourceNotFoundException("Student not found: " + studentDto.getStudentId());
+            }
+
             if ( student.getStatus() == Status.DROPPED_OUT) {
                 throw new StudentDroppedOutException("Student is dropped out");
             }
@@ -129,7 +133,7 @@ public class AttendanceService {
     @Transactional
     public List<AttendanceResponse> updateBulkAttendance(BulkAttendanceRequest request, UUID programId, UUID cohortId) {
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new RuntimeException("Program not found with id: " + programId));
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found with id: " + programId));
 
         List<UUID> studentIds = request.getStudents().stream()
                 .map(StudentAttendanceRequestDto::getStudentId).toList();

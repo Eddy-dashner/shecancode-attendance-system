@@ -1,6 +1,7 @@
 -- ==========================================
 -- 1. DROP TABLES (children first)
 -- ==========================================
+DROP TABLE IF EXISTS activation_token CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS participant CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
@@ -37,10 +38,11 @@ CREATE TABLE program (
 -- ==========================================
 -- 4. STUDENT
 -- ==========================================
+-- Names are nullable: an invited student has no profile yet (filled at activation).
 CREATE TABLE student (
                          student_id UUID PRIMARY KEY,
-                         student_first_name VARCHAR(255) NOT NULL,
-                         student_last_name VARCHAR(255) NOT NULL,
+                         student_first_name VARCHAR(255),
+                         student_last_name VARCHAR(255),
                          email VARCHAR(255) NOT NULL UNIQUE,
                          phone_number VARCHAR(255),
                          home_address VARCHAR(255),
@@ -48,6 +50,7 @@ CREATE TABLE student (
                          student_status VARCHAR(50),
                          cohort_id UUID NOT NULL,
                          program_id UUID NOT NULL,
+                         user_id UUID,
 
                          CONSTRAINT fk_student_cohort
                              FOREIGN KEY (cohort_id)
@@ -56,6 +59,7 @@ CREATE TABLE student (
                          CONSTRAINT fk_student_program
                              FOREIGN KEY (program_id)
                                  REFERENCES program (program_id)
+    -- fk_student_user is added after app_user is created (see below)
 );
 
 -- ==========================================
@@ -111,11 +115,37 @@ CREATE TABLE participant (
 -- ==========================================
 -- 7. APP USER
 -- ==========================================
+-- password is nullable: invited users have no password until they activate.
 CREATE TABLE app_user (
                           user_id UUID PRIMARY KEY,
                           username VARCHAR(255) NOT NULL UNIQUE,
-                          password VARCHAR(255) NOT NULL,
+                          password VARCHAR(255),
                           full_name VARCHAR(255),
                           role VARCHAR(50) NOT NULL,
-                          enabled BOOLEAN NOT NULL DEFAULT TRUE
+                          enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                          account_status VARCHAR(50)
 );
+
+-- Deferred FK: student.user_id -> app_user (app_user is created after student above)
+ALTER TABLE student
+    ADD CONSTRAINT fk_student_user
+        FOREIGN KEY (user_id) REFERENCES app_user (user_id);
+
+-- ==========================================
+-- 8. ACTIVATION TOKEN (account invitation / activation)
+-- ==========================================
+CREATE TABLE activation_token (
+                          id UUID PRIMARY KEY,
+                          token VARCHAR(255) NOT NULL UNIQUE,
+                          user_id UUID NOT NULL,
+                          expires_at TIMESTAMP NOT NULL,
+                          used_at TIMESTAMP,
+                          created_at TIMESTAMP NOT NULL,
+
+                          CONSTRAINT fk_activation_token_user
+                              FOREIGN KEY (user_id)
+                                  REFERENCES app_user (user_id)
+);
+
+CREATE INDEX idx_activation_token_token ON activation_token (token);
+CREATE INDEX idx_activation_token_user ON activation_token (user_id);

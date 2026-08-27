@@ -1,0 +1,9 @@
+=== df of tasks dir ===
+Filesystem     Size   Used  Avail Capacity iused     ifree %iused  Mounted on
+/dev/disk1s1  233Gi  195Gi   20Gi    91% 3045008 205964480    1%   /System/Volumes/Data
+=== files by size ===
+total 8
+drwxr-xr-x@ 4 mac  wheel  128 Aug 27 22:51 .
+drwxr-xr-x@ 3 mac  wheel   96 Aug 27 22:09 ..
+-rw-r--r--@ 1 mac  wheel   19 Aug 27 22:49 bwq1xeoeg.output
+-rw-r--r--@ 1 mac  wheel    0 Aug 27 22:51 bd16wb800.output

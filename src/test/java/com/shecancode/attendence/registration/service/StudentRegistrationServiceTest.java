@@ -1,6 +1,12 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.auth.model.AccountStatus;
+import com.shecancode.attendence.auth.model.AppUser;
+import com.shecancode.attendence.auth.model.Role;
+import com.shecancode.attendence.auth.repository.UserRepository;
+import com.shecancode.attendence.auth.service.ActivationService;
 import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
+import com.shecancode.attendence.registration.Exception.CohortProgramMismatchException;
 import com.shecancode.attendence.registration.Exception.EmailAlreadyExistException;
 import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
 import com.shecancode.attendence.registration.Model.Cohort;
@@ -9,20 +15,23 @@ import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
-import com.shecancode.attendence.registration.dao.StudentRequestDao;
+import com.shecancode.attendence.registration.dao.AdminCreateStudentRequest;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,104 +42,107 @@ class StudentRegistrationServiceTest {
 
     @Mock
     private StudentRepository studentRepository;
-
-
     @Mock
     private CohortRepository cohortRepository;
-
-
     @Mock
-    private ProgramRepository programRepository;
+    private ProgramRepository programsRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private ActivationService activationService;
 
+    private final UUID programId = UUID.randomUUID();
+    private final UUID cohortId = UUID.randomUUID();
 
-    private StudentRequestDao validRequest;
-
-    private final String cohortNumber = "C10";
-
-    private final  String programName = "Backend";
+    private AdminCreateStudentRequest validRequest;
+    private Cohort cohort;
+    private Program program;
 
     @BeforeEach
     void setUp() {
-        validRequest = new StudentRequestDao();
+        validRequest = AdminCreateStudentRequest.builder()
+                .email("joseph@gmail.com")
+                .programId(programId)
+                .cohortId(cohortId)
+                .build();
 
-        validRequest.setStudentLastName("mupenzi");
-        validRequest.setEmail("joseph@gmail.com");
-        validRequest.setHomeAddress("123 st");
-        validRequest.setCohortNumber(cohortNumber);
-        validRequest.setProgramName("Backend");
-        validRequest.setCurrentOccupation("Student");
-        validRequest.setPhoneNumber("716262722");
-        validRequest.setProgramName(programName);
+        cohort = Cohort.builder().id(cohortId).cohortNumber("Cohort-10").build();
+        program = Program.builder().id(programId).programName("Backend").cohort(cohort).build();
     }
 
-
     @Test
-    void test_createStudentSuccessfully() {
-
-        //arrange:
-        Cohort mockCohort = new Cohort();
-        mockCohort.setCohortNumber(cohortNumber);
-
-        Program mockProgram = new Program();
-        mockProgram.setProgramName(programName);
-
-        // Given
+    void createStudentAccount_success_invitesAndReturnsPendingStudent() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
-        when(cohortRepository.findByCohortNumber(cohortNumber)).thenReturn(Optional.of(mockCohort));
-        when(programRepository.findFirstByProgramName(anyString())).thenReturn(Optional.of(mockProgram));
-        when(studentRepository.save(any(Student.class))).thenAnswer(i ->i.getArguments()[0]);
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(cohort));
+        when(studentRepository.save(any(Student.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        StudentResponseDao responseDao = registrationService.createStudent(validRequest, cohortNumber);
+        StudentResponseDao response = registrationService.createStudentAccount(validRequest);
 
-        assertNotNull(responseDao);
-        assertEquals(validRequest.getEmail(), responseDao.getEmail());
-        assertEquals("C10",(responseDao.getCohortNumber()));
-        verify(studentRepository, times(1)).save(any(Student.class));
+        assertNotNull(response);
+        assertEquals("joseph@gmail.com", response.getEmail());
+        assertEquals("Cohort-10", response.getCohortNumber());
 
+        // A disabled, INVITED student account with no password is created
+        ArgumentCaptor<AppUser> userCaptor = ArgumentCaptor.forClass(AppUser.class);
+        verify(userRepository).save(userCaptor.capture());
+        AppUser createdUser = userCaptor.getValue();
+        assertFalse(createdUser.isEnabled());
+        assertNull(createdUser.getPassword());
+        assertEquals(Role.STUDENT, createdUser.getRole());
+        assertEquals(AccountStatus.INVITED, createdUser.getAccountStatus());
 
-
-
+        verify(activationService, times(1)).sendStudentInvitation(any(AppUser.class), any(Student.class));
     }
 
     @Test
-    void createStudentWith_InvalidEmail_throwsException(){
+    void createStudentAccount_invalidEmail_throws() {
         validRequest.setEmail("bad-email");
-
-        assertThrows(IllegalArgumentException.class, () ->{
-            registrationService.createStudent(validRequest,cohortNumber);
-        });
+        assertThrows(IllegalArgumentException.class,
+                () -> registrationService.createStudentAccount(validRequest));
+        verify(activationService, never()).sendStudentInvitation(any(), any());
     }
+
     @Test
-    void createStudent_DuplicateEmail_ThrowsException(){
+    void createStudentAccount_duplicateEmail_throws() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(true);
-
-        assertThrows(EmailAlreadyExistException.class,() ->{
-            registrationService.createStudent(validRequest, cohortNumber);
-        });
-
+        assertThrows(EmailAlreadyExistException.class,
+                () -> registrationService.createStudentAccount(validRequest));
     }
 
     @Test
-    @DisplayName("Error: Should throw Exception when Cohort is not found")
-    void createStudent_cohortNotFound_throwsException(){
-
+    void createStudentAccount_programNotFound_throws() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
-        when(cohortRepository.findByCohortNumber(cohortNumber)).thenReturn(Optional.empty());
-
-        assertThrows(CohortNotFoundException.class, () ->
-                registrationService.createStudent(validRequest,cohortNumber));
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(programsRepository.findById(programId)).thenReturn(Optional.empty());
+        assertThrows(ProgramNotFoundException.class,
+                () -> registrationService.createStudentAccount(validRequest));
     }
 
     @Test
-    void createStudent_Program_NotFound(){
+    void createStudentAccount_cohortNotFound_throws() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
-        Cohort mockCohort = new Cohort();
-        when(cohortRepository.findByCohortNumber(anyString())).thenReturn(Optional.of(mockCohort));
-        when(programRepository.findFirstByProgramName(programName)).thenReturn(Optional.empty());
-
-        assertThrows(ProgramNotFoundException.class, () -> {
-            registrationService.createStudent(validRequest, "C10");
-        });
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findById(cohortId)).thenReturn(Optional.empty());
+        assertThrows(CohortNotFoundException.class,
+                () -> registrationService.createStudentAccount(validRequest));
     }
 
+    @Test
+    @DisplayName("Cohort must belong to the selected program")
+    void createStudentAccount_cohortNotInProgram_throws() {
+        Cohort otherCohort = Cohort.builder().id(UUID.randomUUID()).cohortNumber("Cohort-99").build();
+        Program mismatchedProgram = Program.builder().id(programId).programName("Backend").cohort(otherCohort).build();
+
+        when(studentRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(programsRepository.findById(programId)).thenReturn(Optional.of(mismatchedProgram));
+        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(cohort));
+
+        assertThrows(CohortProgramMismatchException.class,
+                () -> registrationService.createStudentAccount(validRequest));
+        verify(activationService, never()).sendStudentInvitation(any(), any());
+    }
 }

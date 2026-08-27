@@ -5,7 +5,8 @@ services:
     image: postgres:15-alpine
     container_name: shecancode-postgres
     ports:
-      - "5432:5432"
+      # host 5433 -> container 5432 (host 5432 is taken by a local PostgreSQL 16 install)
+      - "5433:5432"
     environment:
       POSTGRES_DB: shecancode
       POSTGRES_USER: postgres

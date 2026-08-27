@@ -161,7 +161,14 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(PUBLIC_URLS).permitAll()
 
                         .requestMatchers("/api/v1/cohorts/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
+
+                        // Trainer invitation (create) is ADMIN-only.
+                        .requestMatchers("/api/v1/trainers/**").hasRole("ADMIN")
+
+                        // Student self-service (own profile) MUST come before the broader
+                        // "/students/**" staff rules, otherwise first-match wins and a STUDENT
+                        // is wrongly blocked (403) on their own /me endpoints.
+                        .requestMatchers("/api/v1/students/me/**").hasRole("STUDENT")
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/students/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/students/**").hasRole("ADMIN")
@@ -170,6 +177,8 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.GET, "/api/v1/students/**")
                         .hasAnyRole("ADMIN", "TRAINER")
 
+                        // Attendance rules MUST come before the broad "/api/v1/programs/**" ADMIN rule,
+                        // otherwise first-match wins and TRAINER is wrongly blocked (403) here.
                         .requestMatchers(HttpMethod.POST, "/api/v1/programs/*/cohorts/*/attendance/**")
                         .hasAnyRole("ADMIN", "TRAINER")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/programs/*/cohorts/*/attendance/**")
@@ -177,6 +186,9 @@ private final JwtAuthenticationFilter jwtAuthFilter;
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/programs/*/cohorts/*/attendance/**")
                         .authenticated()
+
+                        // Any other /programs path remains ADMIN-only.
+                        .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 

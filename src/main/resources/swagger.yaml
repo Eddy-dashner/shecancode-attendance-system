@@ -1,30 +1,187 @@
 openapi: 3.0.3
 info:
-  title: SheCanCODE Student Management System
+  title: SheCanCODE Attendance & Student Management System
   description: >
-    API for Administration (Setup) and Student Registration.
-    Includes Cohort, Program, and Enrollment management.
-  version: 1.0.0
+    API for authentication, administration (cohorts & programs) and the student
+    lifecycle.
+
+    Auth flow:
+      1. An ADMIN (seeded) creates TRAINER accounts via POST /api/v1/auth/register.
+      2. An ADMIN enrols a STUDENT with just an email + program via
+         POST /api/v1/students/{cohortNumber}. This creates a disabled account and
+         emails the student a one-time activation link.
+      3. The student activates and sets a password via POST /api/v1/auth/activate,
+         which returns a JWT.
+      4. The student completes their profile via PUT /api/v1/students/me/profile.
+  version: 2.0.0
 servers:
-<<<<<<< HEAD
-  - url: http://localhost:8080/swagger-ui/index.html
-=======
-  - url: http://localhost:8080
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
+  - url: http://localhost:8081
 
 tags:
+  - name: Authentication
+    description: Register (ADMIN), login, and student account activation
   - name: Administration
-    description: Super Admin setup for Cohorts and Programs
-  - name: Student Registration
-    description: Student onboarding into specific tracks
+    description: Admin setup for Cohorts and Programs
+  - name: Trainers
+    description: Trainer invitation (ADMIN only)
+  - name: Students
+    description: Student enrolment, activation profile and lookup
 
 paths:
-  # --- COHORT MANAGEMENT ---
+  # ─── AUTHENTICATION ────────────────────────────────────────────────────────
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new ADMIN (ADMIN only)
+      description: >
+        Password-based creation of an ADMIN account (bootstrap / adding admins) and
+        returns a JWT. TRAINER and STUDENT accounts are created via the invitation
+        flow (POST /api/v1/trainers and POST /api/v1/students) and are rejected here.
+        Requires an ADMIN bearer token.
+      operationId: register
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created; JWT returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation failed, non-ADMIN role rejected, or username taken
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Authenticated caller is not an ADMIN
+
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login and receive a JWT token
+      description: Public endpoint. Exchanges username/password for a Bearer JWT.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated; JWT returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing username or password
+        '401':
+          description: Invalid username or password (generic message)
+        '403':
+          description: Account is disabled (not yet activated)
+
+  /api/v1/auth/activate:
+    post:
+      tags: [Authentication]
+      summary: Activate a student account and set a password
+      description: >
+        Public endpoint. A student uses the one-time token from their activation
+        email, together with a password and confirmation, to enable their account.
+        Returns a JWT so they can complete their profile.
+      operationId: activate
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAccountRequest'
+      responses:
+        '200':
+          description: Account activated; JWT returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Passwords mismatch, or token invalid/expired
+
+  /api/v1/auth/resend-activation:
+    post:
+      tags: [Authentication]
+      summary: Resend an activation email
+      description: >
+        Public endpoint. Invalidates the previous activation token, issues a new one,
+        and re-sends the invitation email. Rate-limited by a per-account cooldown.
+      operationId: resendActivation
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendActivationRequest'
+      responses:
+        '200':
+          description: If the account exists and is not active, a new email was sent
+        '400':
+          description: No pending invitation, or cooldown has not elapsed
+        '409':
+          description: Account is already activated
+        '502':
+          description: Email could not be sent
+
+  # ─── TRAINER INVITATION ────────────────────────────────────────────────────
+  /api/v1/trainers:
+    post:
+      tags: [Trainers]
+      summary: Invite a trainer (ADMIN only)
+      description: >
+        Creates a disabled TRAINER account and emails an activation link. The trainer
+        sets their own password on activation.
+      operationId: inviteTrainer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerInviteRequest'
+      responses:
+        '201':
+          description: Trainer invited; activation email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitedAccountResponse'
+        '400':
+          description: Validation failed
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not an ADMIN
+        '409':
+          description: A user with this email already exists
+        '502':
+          description: Invitation email could not be sent
+
+  # ─── COHORT MANAGEMENT ─────────────────────────────────────────────────────
   /api/v1/cohort:
     post:
       tags: [Administration]
-      summary: Create a new cohort
+      summary: Create a new cohort (ADMIN only)
       operationId: createCohort
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -38,24 +195,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CohortResponseDao'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not an ADMIN
+    get:
+      tags: [Administration]
+      summary: List all cohorts (ADMIN only)
+      operationId: getAllCohorts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CohortResponseDao'
 
-  # --- PROGRAM MANAGEMENT ---
-<<<<<<< HEAD
-  # Fixed: Changed from plural "programs" to singular "program" to match controller
-  #creating a program within a cohort
+  # ─── PROGRAM MANAGEMENT ────────────────────────────────────────────────────
   /api/v1/cohorts/{cohortNumber}/program:
     post:
       tags: [Administration]
-      summary: Create a new program within a cohort
-      operationId: CreateProgram
-=======
-  # Standard practice: /cohorts/{id}/programs
-  /api/v1/cohorts/{cohortNumber}/programs:
-    post:
-      tags: [Administration]
-      summary: Create a new program within a cohort
+      summary: Create a new program within a cohort (ADMIN only)
       operationId: createProgram
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
+      security:
+        - bearerAuth: []
       parameters:
         - name: cohortNumber
           in: path
@@ -72,64 +239,248 @@ paths:
       responses:
         '201':
           description: Program created successfully
-<<<<<<< HEAD
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProgramResponseDao'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not an ADMIN
 
-  # --- STUDENT REGISTRATION ---
-  # Fixed: Removed {programName} to match controller implementation
-  /api/v1/students/{cohortNumber}:
+  # ─── STUDENT ENROLMENT & PROFILE ───────────────────────────────────────────
+  /api/v1/students:
     post:
-      tags: [Student Registration]
-      summary: Register a Student
+      tags: [Students]
+      summary: Invite a student (ADMIN only)
+      description: >
+        Creates a PENDING student and a disabled login account from an email, program
+        and cohort, then emails the student an activation link. The program and cohort
+        must already exist, and the cohort must belong to the program.
       operationId: addStudent
-=======
-
-  # --- STUDENT REGISTRATION ---
-  /api/v1/students/{cohortNumber}/{programName}:
-    post:
-      tags: [Student Registration]
-      summary: Register a Student
-      operationId: registerStudent
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
-      parameters:
-        - name: cohortNumber
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "Cohort-18"
-<<<<<<< HEAD
-=======
-        - name: programName
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "BACKEND"
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudentRequestDao'
+              $ref: '#/components/schemas/AdminCreateStudentRequest'
       responses:
         '201':
-          description: Student successfully registered
+          description: Student invited; activation email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponseDao'
+        '400':
+          description: Validation failed, or cohort does not belong to program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not an ADMIN
+        '404':
+          description: Cohort or program not found
+        '409':
+          description: A student with this email already exists
+        '502':
+          description: Invitation email could not be sent
+    get:
+      tags: [Students]
+      summary: List all students (ADMIN or TRAINER)
+      operationId: getAllStudents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentResponseDao'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT (not permitted)
+
+  /api/v1/students/me:
+    get:
+      tags: [Students]
+      summary: Get my profile (STUDENT only)
+      description: Returns the authenticated student's own profile.
+      operationId: getMyProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponseDao'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not a STUDENT
+        '404':
+          description: No student record for this account
+
+  /api/v1/students/me/profile:
+    put:
+      tags: [Students]
+      summary: Complete my profile (STUDENT only)
+      description: >
+        The authenticated student fills in their remaining details after activating.
+        Moves the record from PENDING to ACTIVE.
+      operationId: completeMyProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteProfileRequest'
+      responses:
+        '200':
+          description: Profile completed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentResponseDao'
         '400':
           description: Validation failed
-        '422':
-          description: Cohort or Program not found
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not a STUDENT
+        '404':
+          description: No student record for this account
+
+  /api/v1/students/{studentId}/dropout:
+    patch:
+      tags: [Students]
+      summary: Mark a student as dropped out (ADMIN only)
+      operationId: dropOutStudent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Student marked as DROPPED_OUT
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not an ADMIN
+        '404':
+          description: Student not found
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # ─── Auth ───────────────────────────────────────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [username, password, fullName, role]
+      properties:
+        username:
+          type: string
+          example: "admin_kelia"
+        password:
+          type: string
+          example: "P@ssw0rd123"
+        fullName:
+          type: string
+          example: "Kelia Admin"
+        role:
+          type: string
+          enum: [ADMIN]
+          example: "ADMIN"
+          description: Only ADMIN can be created here; trainers/students are invited.
+
+    ResendActivationRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "aline.keza@example.com"
+
+    TrainerInviteRequest:
+      type: object
+      required: [email, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "trainer.jane@example.com"
+        fullName:
+          type: string
+          example: "Jane Umutoni"
+
+    InvitedAccountResponse:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string }
+        fullName: { type: string }
+        role: { type: string, enum: [ADMIN, TRAINER, STUDENT] }
+        accountStatus: { type: string, enum: [INVITED, PROFILE_INCOMPLETE, PROFILE_COMPLETE, ACTIVE] }
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin123"
+
+    ActivateAccountRequest:
+      type: object
+      required: [token, password, confirmPassword]
+      properties:
+        token:
+          type: string
+          description: One-time token from the activation email link
+        password:
+          type: string
+          minLength: 8
+          example: "P@ssw0rd123"
+        confirmPassword:
+          type: string
+          example: "P@ssw0rd123"
+
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        tokenType: { type: string, example: "Bearer" }
+        username: { type: string }
+        fullName: { type: string }
+        role: { type: string, enum: [ADMIN, TRAINER, STUDENT] }
+        accountStatus:
+          type: string
+          enum: [INVITED, PROFILE_INCOMPLETE, PROFILE_COMPLETE, ACTIVE]
+          description: Frontend routes on this — PROFILE_INCOMPLETE → profile page, else dashboard.
+
+    # ─── Administration ───────────────────────────────────────────────────────
     CohortRequestDao:
       type: object
       required: [cohortNumber, startDate, endDate]
@@ -169,8 +520,6 @@ components:
           type: string
           format: date
 
-<<<<<<< HEAD
-    # Added missing ProgramResponseDao schema
     ProgramResponseDao:
       type: object
       properties:
@@ -181,42 +530,57 @@ components:
         programEndDate: { type: string, format: date }
         cohortNumber: { type: string }
 
-=======
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
-    StudentRequestDao:
+    # ─── Students ─────────────────────────────────────────────────────────────
+    AdminCreateStudentRequest:
       type: object
-      required: [studentFirstName, studentLastName, email, phoneNumber]
+      required: [email, programId, cohortId]
       properties:
-        studentFirstName:
-          type: string
-          example: "Bob"
-        studentLastName:
-          type: string
-          example: "Doe"
         email:
           type: string
           format: email
-          example: "bob@example.com"
+          example: "aline.keza@example.com"
+        programId:
+          type: string
+          format: uuid
+          description: ID of an existing program
+        cohortId:
+          type: string
+          format: uuid
+          description: ID of an existing cohort (must be the program's cohort)
+
+    CompleteProfileRequest:
+      type: object
+      required: [studentFirstName, studentLastName, phoneNumber]
+      properties:
+        studentFirstName:
+          type: string
+          example: "Aline"
+        studentLastName:
+          type: string
+          example: "Keza"
         phoneNumber:
           type: string
-          example: "+250788112233"
+          example: "+250780000001"
         homeAddress:
           type: string
+          example: "Kigali, Gasabo"
         currentOccupation:
           type: string
+          example: "Student"
 
     StudentResponseDao:
       type: object
       properties:
         studentId: { type: string, format: uuid }
-        fullName: { type: string }
+        studentFirstName: { type: string }
+        studentLastName: { type: string }
+        phoneNumber: { type: string }
         email: { type: string }
-        status: { type: string, example: "ACTIVE" }
-        cohortNumber: { type: string }
+        homeAddress: { type: string }
         programName: { type: string }
+        status: { type: string, enum: [PENDING, ACTIVE, INACTIVE, GRADUATED, DROPPED_OUT], example: "PENDING" }
+        currentOccupation: { type: string }
+        programStartedDate: { type: string, format: date }
         estimateGraduationDate: { type: string, format: date }
-<<<<<<< HEAD
         daysRemainingToGraduate: { type: integer }
-=======
-        daysRemainingToGraduate: { type: integer }
->>>>>>> 9327538160dac42747dd38ffc4bfe9034b75a9e4
+        cohortNumber: { type: string }
