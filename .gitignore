@@ -29,6 +29,17 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### Secrets / local config (never commit credentials) ###
+.env
+.env.*
+*.env
+application-local.yml
+application-local.yaml
+application-local.properties
+application-secret*.yml
+application-secret*.yaml
+application-secret*.properties
+
 ### VS Code ###
 branch_structure.json
 temp_auto_push.bat

@@ -1,0 +1,25 @@
+=== 8081? ===
+COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+java    32947  mac  118u  IPv6 0x860cc87e7318f441      0t0  TCP *:8081 (LISTEN)
+=== mvnw/java procs ===
+=== log tail ===
+        oe1_0.status,
+        oe1_0.updated_at 
+    from
+        attendance_outbox oe1_0 
+    where
+        oe1_0.status=?
+Hibernate: 
+    select
+        oe1_0.id,
+        oe1_0.aggregate_id,
+        oe1_0.created_at,
+        oe1_0.event_type,
+        oe1_0.payload,
+        oe1_0.processed_at,
+        oe1_0.status,
+        oe1_0.updated_at 
+    from
+        attendance_outbox oe1_0 
+    where
+        oe1_0.status=?

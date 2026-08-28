@@ -27,7 +27,9 @@ public class AppUser implements UserDetails {
     @Column(name = "username", unique = true, nullable = false)
     private String username;
 
-    @Column(name = "password", nullable = false)
+    // Nullable: student accounts are created by an admin without a password and
+    // stay password-less until the student activates via an email token.
+    @Column(name = "password")
     private String password;
 
     @Column(name = "full_name")
@@ -40,6 +42,12 @@ public class AppUser implements UserDetails {
     @Column(name = "enabled")
     @Builder.Default
     private boolean enabled = true;
+
+    // Onboarding state (INVITED -> PROFILE_INCOMPLETE -> PROFILE_COMPLETE / ACTIVE).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status")
+    @Builder.Default
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
     // ---- UserDetails contract ----
 

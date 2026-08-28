@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.Model;
 
+import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.registration.Enum.Status;
 import jakarta.persistence.*;
 import lombok.*;
@@ -49,6 +50,12 @@ public class Student {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id")
     private Program program;
+
+    // The login account backing this student. Created (disabled) when the admin
+    // adds the student and activated by the student via an email token.
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
 
     public String getFullName() {
         return studentFirstName + " " + studentLastName;

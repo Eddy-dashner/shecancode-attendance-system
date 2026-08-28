@@ -3,7 +3,7 @@ spring:
     name: shecancode-attendance-system
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/shecancode
+    url: jdbc:postgresql://localhost:5433/shecancode
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -21,8 +21,21 @@ spring:
     init:
       mode: always
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   kafka:
-    bootstrap-servers: shecancode-kafka:29092
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: attendance-group
       auto-offset-reset: earliest
@@ -35,12 +48,22 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 app:
+  # Base URL of the (external) frontend. Activation links are built as
+  # ${app.frontend-url}/activate?token=<TOKEN>
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  name: SheCanCODE
   jwt:
     secret: change-this-to-a-long-secure-secret-key-at-least-32-bytes
     expiration-ms: 86400000
+  mail:
+    from-address: ${MAIL_FROM:no-reply@shecancode.com}
+  activation:
+    token-expiry-hours: ${ACTIVATION_TOKEN_EXPIRY_HOURS:48}
+    # Minimum seconds between successive resend requests for the same account
+    resend-cooldown-seconds: ${ACTIVATION_RESEND_COOLDOWN_SECONDS:60}
 
 server:
-  port: 8080
+  port: 8082
 
 logging:
   level:

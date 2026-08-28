@@ -1,0 +1,8 @@
+Filesystem     Size   Used  Avail Capacity iused     ifree %iused  Mounted on
+/dev/disk1s1  233Gi  195Gi   20Gi    91% 3045003 205975360    1%   /System/Volumes/Data
+=== top dirs in /private/tmp ===
+2.5M	/private/tmp/node-compile-cache
+4.0K	/private/tmp/claude-501
+  0B	/private/tmp/powerlog
+  0B	/private/tmp/com.apple.launchd.5CxekwMkV9
+  0B	/private/tmp/claude-mcp-browser-bridge-mac

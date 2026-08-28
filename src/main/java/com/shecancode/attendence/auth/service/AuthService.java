@@ -3,7 +3,9 @@ package com.shecancode.attendence.auth.service;
 import com.shecancode.attendence.auth.dto.AuthResponse;
 import com.shecancode.attendence.auth.dto.LoginRequest;
 import com.shecancode.attendence.auth.dto.RegisterRequest;
+import com.shecancode.attendence.auth.model.AccountStatus;
 import com.shecancode.attendence.auth.model.AppUser;
+import com.shecancode.attendence.auth.model.Role;
 import com.shecancode.attendence.auth.repository.UserRepository;
 import com.shecancode.attendence.auth.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,18 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Password-based creation of an ADMIN account (bootstrap / adding more admins).
+     * TRAINER and STUDENT accounts are created via the invitation flow instead
+     * (see {@code TrainerController} and the student enrolment endpoint), so they
+     * are rejected here.
+     */
     public AuthResponse register(RegisterRequest request) {
+        if (request.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException(
+                    "Only ADMIN accounts can be created here. Invite trainers and students via their invitation endpoints.");
+        }
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException(
                     "Username '" + request.getUsername() + "' is already taken.");
@@ -35,13 +48,13 @@ public class AuthService {
                 .fullName(request.getFullName())
                 .role(request.getRole())
                 .enabled(true)
+                .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         userRepository.save(user);
         log.info("Registered new user [{}] with role [{}]", user.getUsername(), user.getRole());
 
-        String token = jwtService.generateToken(user);
-        return buildAuthResponse(token, user);
+        return buildAuthResponse(user);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -55,18 +68,18 @@ public class AuthService {
         AppUser user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        String token = jwtService.generateToken(user);
         log.info("User [{}] logged in successfully", user.getUsername());
-        return buildAuthResponse(token, user);
+        return buildAuthResponse(user);
     }
 
-    private AuthResponse buildAuthResponse(String token, AppUser user) {
+    private AuthResponse buildAuthResponse(AppUser user) {
         return AuthResponse.builder()
-                .token(token)
+                .token(jwtService.generateToken(user))
                 .tokenType("Bearer")
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .accountStatus(user.getAccountStatus())
                 .build();
     }
 }
