@@ -3,9 +3,9 @@ spring:
     name: shecancode-attendance-system
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/shecancode
-    username: postgres
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/shecancode}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -35,7 +35,7 @@ spring:
             required: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: attendance-group
       auto-offset-reset: earliest
@@ -63,7 +63,7 @@ app:
     resend-cooldown-seconds: ${ACTIVATION_RESEND_COOLDOWN_SECONDS:60}
 
 server:
-  port: 8082
+  port: 8081
 
 logging:
   level:
