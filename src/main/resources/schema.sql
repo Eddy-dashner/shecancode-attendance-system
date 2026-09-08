@@ -5,34 +5,34 @@ DROP TABLE IF EXISTS activation_token CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS participant CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
-DROP TABLE IF EXISTS program CASCADE;
 DROP TABLE IF EXISTS cohort CASCADE;
+DROP TABLE IF EXISTS program CASCADE;
 DROP TABLE IF EXISTS app_user CASCADE;
 
 -- ==========================================
--- 2. COHORT (Parent Table)
--- ==========================================
-CREATE TABLE cohort (
-                        cohort_id UUID PRIMARY KEY,
-                        cohort_number VARCHAR(255) NOT NULL UNIQUE,
-                        start_date DATE NOT NULL,
-                        end_date DATE NOT NULL
-);
-
--- ==========================================
--- 3. PROGRAM
+-- 2. PROGRAM (Parent Table)
 -- ==========================================
 CREATE TABLE program (
                          program_id UUID PRIMARY KEY,
                          program_name VARCHAR(255) NOT NULL,
                          program_duration INTEGER,
                          program_start_date DATE NOT NULL,
-                         program_end_date DATE NOT NULL,
-                         cohort_id UUID NOT NULL,
+                         program_end_date DATE NOT NULL
+);
 
-                         CONSTRAINT fk_program_cohort
-                             FOREIGN KEY (cohort_id)
-                                 REFERENCES cohort (cohort_id)
+-- ==========================================
+-- 3. COHORT (belongs to a Program)
+-- ==========================================
+CREATE TABLE cohort (
+                        cohort_id UUID PRIMARY KEY,
+                        cohort_number VARCHAR(255) NOT NULL UNIQUE,
+                        start_date DATE NOT NULL,
+                        end_date DATE NOT NULL,
+                        program_id UUID NOT NULL,
+
+                        CONSTRAINT fk_cohort_program
+                            FOREIGN KEY (program_id)
+                                REFERENCES program (program_id)
 );
 
 -- ==========================================

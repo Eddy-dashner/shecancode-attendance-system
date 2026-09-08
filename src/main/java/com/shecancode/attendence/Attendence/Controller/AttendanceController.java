@@ -50,9 +50,6 @@ public class AttendanceController {
             @Valid @RequestBody BulkAttendanceRequest request) {
 
         List<AttendanceResponse> responses = attendanceService.recordBulkAttendance(request, programId, cohortId);
-
-        // If the service skipped all records (e.g., all were duplicates),
-        // you might return 200 OK or 204 No Content instead of 201 Created.
         if (responses.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
