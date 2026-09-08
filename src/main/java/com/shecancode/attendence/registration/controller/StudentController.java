@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ import java.util.List;
 @RestController
 @RequestMapping( "/api/v1/students")
 @Slf4j
-@Tag(name = "Students", description = "Student enrolment, activation profile and lookup")
 public class StudentController {
     private final StudentRegistrationService service;
 
@@ -32,7 +30,7 @@ public class StudentController {
     }
 
     @PostMapping
-    @Operation(summary = "Invite a student (ADMIN only)",
+    @Operation(tags = {"Admin"}, summary = "Invite a student (ADMIN only)",
             description = "Creates a PENDING student and a disabled login account from just an email, program and " +
                     "cohort, then emails the student an activation link. The program and cohort must already exist, " +
                     "and the cohort must belong to the program.")
@@ -53,7 +51,7 @@ public class StudentController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Get my profile (STUDENT only)",
+    @Operation(tags = {"Student"}, summary = "Get my profile (STUDENT only)",
             description = "Returns the authenticated student's own profile.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Profile returned"),
@@ -67,7 +65,7 @@ public class StudentController {
     }
 
     @PutMapping("/me/profile")
-    @Operation(summary = "Complete my profile (STUDENT only)",
+    @Operation(tags = {"Student"}, summary = "Complete my profile (STUDENT only)",
             description = "The authenticated student fills in their remaining details after activating. " +
                     "Moves the record from PENDING to ACTIVE.")
     @ApiResponses({
@@ -84,7 +82,7 @@ public class StudentController {
     }
 
     @GetMapping()
-    @Operation(summary = "List all students (ADMIN or TRAINER)",
+    @Operation(tags = {"Admin"}, summary = "List all students (ADMIN or TRAINER)",
             description = "Returns all registered students. TRAINER has read-only access per the role model.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List returned"),

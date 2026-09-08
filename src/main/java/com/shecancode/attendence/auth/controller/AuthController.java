@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Register and login endpoints")
 public class AuthController {
 
     private final AuthService authService;
@@ -38,7 +36,7 @@ public class AuthController {
      * The very first ADMIN must be seeded via data.sql.
      */
     @PostMapping("/register")
-    @Operation(summary = "Register a new user (ADMIN only)",
+    @Operation(tags = {"Admin"}, summary = "Register a new user (ADMIN only)",
             description = "Creates a new ADMIN/TRAINER/STUDENT account and returns a JWT for the created user. " +
                     "Requires an ADMIN bearer token. The first ADMIN is seeded via data.sql.")
     @ApiResponses({
@@ -57,7 +55,7 @@ public class AuthController {
      * Exchanges a one-time email token + chosen password for an enabled account and a JWT.
      */
     @PostMapping("/activate")
-    @Operation(summary = "Activate a student account and set a password",
+    @Operation(tags = {"Authentication"}, summary = "Activate a student account and set a password",
             description = "Public endpoint. A student uses the token from their activation email, together with " +
                     "a password and confirmation, to enable their account. Returns a JWT so they can complete their profile.")
     @SecurityRequirements // public: no bearer lock in Swagger UI
@@ -73,7 +71,7 @@ public class AuthController {
      * Public: request a fresh activation email for a not-yet-activated account.
      */
     @PostMapping("/resend-activation")
-    @Operation(summary = "Resend an activation email",
+    @Operation(tags = {"Authentication"}, summary = "Resend an activation email",
             description = "Public endpoint. Invalidates the previous activation token, issues a new one, and " +
                     "re-sends the invitation email. Rate-limited by a per-account cooldown.")
     @SecurityRequirements // public
@@ -91,7 +89,7 @@ public class AuthController {
      * Public login — returns a JWT on success.
      */
     @PostMapping("/login")
-    @Operation(summary = "Login and receive a JWT token",
+    @Operation(tags = {"Authentication"}, summary = "Login and receive a JWT token",
             description = "Public endpoint. Exchanges username/password for a Bearer JWT. " +
                     "On failure it returns a generic 401 that does not reveal whether the username exists.")
     @SecurityRequirements // public: no bearer lock in Swagger UI

@@ -17,7 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping( "/api/v1/students")
 @RequiredArgsConstructor
-@Tag(name = "Students", description = "Student lifecycle management")
+@Tag(name = "Admin", description = "Actions performed by an ADMIN: user registration and student administration (invite, bulk-invite, list, drop-out)")
 public class StudentLifeCycleController {
     private final StudentLifeCycleService lifeCycleService;
 
