@@ -1,10 +1,7 @@
 package com.shecancode.attendence.registration.service;
 
-import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Mapper.ProgramMapper;
-import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
-import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.registration.dao.ProgramRequestDao;
 import com.shecancode.attendence.registration.dao.ProgramResponseDao;
@@ -21,31 +18,27 @@ import java.util.UUID;
 public class ProgramService {
     private final ProgramRepository programRepository;
 
-    private final CohortRepository cohortRepository;
 
-
-    public ProgramService(ProgramRepository programRepository, CohortRepository cohortRepository) {
+    public ProgramService(ProgramRepository programRepository) {
         this.programRepository = programRepository;
-        this.cohortRepository = cohortRepository;
     }
 
     /**
-     * @param cohortNumber
-     * @param programRequest
-     * @return
+     * Creates a program. A program stands on its own and does not require a cohort;
+     * cohorts are attached to a program later via cohort creation.
+     *
+     * @param programRequest the program to create
+     * @return the created program
      */
-    public ProgramResponseDao createProgram(String cohortNumber, ProgramRequestDao programRequest){
+    public ProgramResponseDao createProgram(ProgramRequestDao programRequest){
 
-        Cohort cohort = cohortRepository.findByCohortNumber(cohortNumber).orElseThrow(()
-                -> new CohortNotFoundException(" cohort not found exception"));
-
-        // 1. Check if ID exists (Note: Usually for 'Create', we don't pass an ID)
+        // 1. Reject duplicate program names
         if (programRepository.existsByProgramName(programRequest.getProgramName())) {
             log.error("Duplicate program name: {}", LoggingUtils.sanitizeForLogging(programRequest.getProgramName()));
             throw new IllegalArgumentException("A program named '" + programRequest.getProgramName() + "' already exists.");
         }
 
-// 2. Validate Dates using the request object
+        // 2. Validate Dates using the request object
         if (programRequest.getProgramStartDate() != null && programRequest.getProgramEndDate() != null) {
             if (programRequest.getProgramEndDate().isBefore(programRequest.getProgramStartDate())) {
                 throw new IllegalArgumentException("End date cannot be before start date");
@@ -55,14 +48,11 @@ public class ProgramService {
                 .id(UUID.randomUUID())
                 .programName(programRequest.getProgramName())
                 .programDuration(programRequest.getProgramDuration())
-                .cohort(cohort)
                 .programStartDate(programRequest.getProgramStartDate())
                 .programEndDate(programRequest.getProgramEndDate())
-//                .daysRemainingUntilGraduation(program.getDaysRemainingUntilGraduation())
                 .build();
         Program saveProgram = programRepository.save(newProgram);
-        log.info("program saved successfully");
-        log.info("saving a program {} under the cohort: {} ", LoggingUtils.sanitizeForLogging(newProgram.getProgramName()), LoggingUtils.sanitizeForLogging(cohortNumber));
+        log.info("program {} saved successfully", LoggingUtils.sanitizeForLogging(newProgram.getProgramName()));
 
         return ProgramMapper.ToResponseDao(saveProgram);
 

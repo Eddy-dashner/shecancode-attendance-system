@@ -1,6 +1,5 @@
 package com.shecancode.attendence.registration.dao;
 
-import com.shecancode.attendence.registration.Model.Cohort;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -14,7 +13,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Program creation payload. The cohort is taken from the path {cohortNumber}.")
+@Schema(description = "Program creation payload. A program does not require a cohort.")
 public class ProgramRequestDao {
 
     @Schema(hidden = true)
@@ -32,8 +31,5 @@ public class ProgramRequestDao {
 
     @Schema(example = "2026-09-01")
     private LocalDate programEndDate;
-
-    @Schema(hidden = true)
-    private Cohort cohort;
 
 }

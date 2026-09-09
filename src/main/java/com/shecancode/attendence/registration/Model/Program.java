@@ -32,14 +32,6 @@ public class Program {
     @Column(name = "program_end_date", nullable = false)
     private LocalDate programEndDate;
 
-
-//    @Column(name = "days_to_graduate")
-//    private Integer daysRemainingUntilGraduation;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id", nullable = false)
-    private Cohort cohort;
-
     private boolean isCalendarExpired() {
         return LocalDate.now().isAfter(this.programEndDate);
 

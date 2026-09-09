@@ -17,7 +17,7 @@ INSERT INTO attendance (attendance_id, student_id, program_id, cohort_id, check_
 VALUES ('550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440000', '2026-03-01 12:00:00', 'PRESENT', 'Good', '2026-03-01 00:00:00', '2026-03-01 12:00:00', '2026-03-01 12:00:00', '550e8400-e29b-41d4-a716-446655440010', 'Existing User');
 
 INSERT INTO participant (id, student_id, program_id, attendance_points, attendance_percentage, progress_color, consecutive_absences, last_updated)
-VALUES ('550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440010', 10, 10, 'green', 0, CURRENT_TIMESTAMP);
+VALUES ('550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440010', 10, 10, 'GREEN', 0, CURRENT_TIMESTAMP);
 
 INSERT INTO app_user (user_id, username, password, full_name, role, enabled, account_status)
 VALUES

@@ -2,6 +2,7 @@ package com.shecancode.attendence.registration.Mapper;
 
 import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Model.Cohort;
+import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
@@ -10,6 +11,9 @@ public class StudentMapper {
     public static StudentResponseDao toDTO (Student student){
         if (student == null)
             return null;
+
+        Program program = student.getProgram();
+        Cohort cohort = student.getCohort();
         return  StudentResponseDao.builder()
                .studentId(student.getId())
                 .studentFirstName(student.getStudentFirstName())
@@ -17,13 +21,12 @@ public class StudentMapper {
                 .phoneNumber(student.getPhoneNumber())
                 .email(student.getEmail())
                 .homeAddress(student.getHomeAddress())
-                .programName(student.getProgram().getProgramName())
+                .programName(program != null ? program.getProgramName() : null)
                 .status(student.getStatus())
                 .currentOccupation(student.getCurrentOccupation())
-                .programStartedDate(student.getCohort().getStartDate())
-                .cohortNumber(student.getCohort().getCohortNumber())
-                .estimateGraduationDate(student.getCohort().getEndDate())
-//                .daysRemainingToGraduate(student.getDaysToGraduation() != null ? student.getDaysToGraduation() : 0)
+                .programStartedDate(cohort != null ? cohort.getStartDate() : null)
+                .cohortNumber(cohort != null ? cohort.getCohortNumber() : null)
+                .estimateGraduationDate(cohort != null ? cohort.getEndDate() : null)
                 .build();
     }
 
