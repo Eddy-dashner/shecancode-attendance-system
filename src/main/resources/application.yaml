@@ -24,12 +24,15 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    username: ${MAIL_USERNAME:no-reply@igirerwanda.org}
+    password: ${MAIL_PASSWORD:pdep moky fhbd usgt}
     properties:
       mail:
         smtp:
           auth: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
           starttls:
             enable: true
             required: true
@@ -56,7 +59,9 @@ app:
     secret: change-this-to-a-long-secure-secret-key-at-least-32-bytes
     expiration-ms: 86400000
   mail:
-    from-address: ${MAIL_FROM:no-reply@shecancode.com}
+    # Gmail rejects a From that isn't the authenticated account (or a verified
+    # alias), so default the From to MAIL_USERNAME unless MAIL_FROM is set.
+    from-address: ${MAIL_FROM:${MAIL_USERNAME:no-reply@shecancode.com}}
   activation:
     token-expiry-hours: ${ACTIVATION_TOKEN_EXPIRY_HOURS:48}
     # Minimum seconds between successive resend requests for the same account

@@ -74,7 +74,7 @@ public class StudentRegistrationService {
                         "Enrolment failed: Cohort [" + LoggingUtils.sanitizeForLogging(String.valueOf(request.getCohortId())) + "] not found."));
 
         // 5. Verify the cohort belongs to the selected program
-        if (program.getCohort() == null || !program.getCohort().getId().equals(cohort.getId())) {
+        if (cohort.getProgram() == null || !cohort.getProgram().getId().equals(program.getId())) {
             throw new CohortProgramMismatchException(
                     "The selected cohort does not belong to the selected program.");
         }
