@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/cohorts")
-@Tag(name = "Programs", description = "Program management within a cohort (ADMIN only)")
+@RequestMapping("/api/v1/programs")
+@Tag(name = "Programs", description = "Program management (ADMIN only)")
 public class ProgramController {
 
     private final ProgramService programService;
@@ -29,23 +29,21 @@ public class ProgramController {
         this.programService = programService;
     }
 
-    @PostMapping("/{cohortNumber}/program")
-    @Operation(summary = "Create a program under a cohort (ADMIN only)",
-            description = "Adds a program to the cohort identified by cohortNumber. Program name must be unique; " +
+    @PostMapping
+    @Operation(summary = "Create a program (ADMIN only)",
+            description = "Creates a program. A program does not require a cohort. Program name must be unique; " +
                     "programEndDate must not be before programStartDate.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Program created"),
             @ApiResponse(responseCode = "400", description = "Blank program name, duplicate name, or end date before start date", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Cohort not found", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content)
     })
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProgramResponseDao> CreateProgram(@PathVariable String cohortNumber,
-                                                            @Valid @RequestBody ProgramRequestDao  requestDao){
+    public ResponseEntity<ProgramResponseDao> CreateProgram(@Valid @RequestBody ProgramRequestDao requestDao){
 
-        log.info("program created : {} ", LoggingUtils.sanitizeForLogging(cohortNumber));
-       ProgramResponseDao saveResponse =programService.createProgram( cohortNumber, requestDao);
+        log.info("Creating program: {}", LoggingUtils.sanitizeForLogging(requestDao.getProgramName()));
+       ProgramResponseDao saveResponse = programService.createProgram(requestDao);
        return new ResponseEntity<>(saveResponse, HttpStatus.CREATED);
 
     }

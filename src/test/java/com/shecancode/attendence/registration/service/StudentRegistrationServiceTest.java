@@ -66,8 +66,8 @@ class StudentRegistrationServiceTest {
                 .cohortId(cohortId)
                 .build();
 
-        cohort = Cohort.builder().id(cohortId).cohortNumber("Cohort-10").build();
-        program = Program.builder().id(programId).programName("Backend").cohort(cohort).build();
+        program = Program.builder().id(programId).programName("Backend").build();
+        cohort = Cohort.builder().id(cohortId).cohortNumber("Cohort-10").program(program).build();
     }
 
     @Test
@@ -133,13 +133,14 @@ class StudentRegistrationServiceTest {
     @Test
     @DisplayName("Cohort must belong to the selected program")
     void createStudentAccount_cohortNotInProgram_throws() {
-        Cohort otherCohort = Cohort.builder().id(UUID.randomUUID()).cohortNumber("Cohort-99").build();
-        Program mismatchedProgram = Program.builder().id(programId).programName("Backend").cohort(otherCohort).build();
+        // The requested cohort belongs to a different program than the requested one.
+        Program otherProgram = Program.builder().id(UUID.randomUUID()).programName("Frontend").build();
+        Cohort mismatchedCohort = Cohort.builder().id(cohortId).cohortNumber("Cohort-10").program(otherProgram).build();
 
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(programsRepository.findById(programId)).thenReturn(Optional.of(mismatchedProgram));
-        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(cohort));
+        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(mismatchedCohort));
 
         assertThrows(CohortProgramMismatchException.class,
                 () -> registrationService.createStudentAccount(validRequest));

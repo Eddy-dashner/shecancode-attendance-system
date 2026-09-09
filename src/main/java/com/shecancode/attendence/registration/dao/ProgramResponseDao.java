@@ -1,6 +1,5 @@
 package com.shecancode.attendence.registration.dao;
 
-import com.shecancode.attendence.registration.Model.Cohort;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -19,6 +18,4 @@ public class ProgramResponseDao {
     private LocalDate programStartDate;
 
     private LocalDate programEndDate;
-
-    private Cohort cohort;
 }

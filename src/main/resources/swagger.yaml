@@ -199,6 +199,10 @@ paths:
           description: Missing or invalid JWT
         '403':
           description: Caller is not an ADMIN
+        '404':
+          description: The referenced program was not found
+        '409':
+          description: A cohort with this number already exists
     get:
       tags: [Administration]
       summary: List all cohorts (ADMIN only)
@@ -216,20 +220,16 @@ paths:
                   $ref: '#/components/schemas/CohortResponseDao'
 
   # ─── PROGRAM MANAGEMENT ────────────────────────────────────────────────────
-  /api/v1/cohorts/{cohortNumber}/program:
+  /api/v1/programs:
     post:
       tags: [Administration]
-      summary: Create a new program within a cohort (ADMIN only)
+      summary: Create a new program (ADMIN only)
+      description: >
+        Creates a program. A program does not require a cohort; cohorts are created
+        against an existing program (Program 1 ── * Cohort).
       operationId: createProgram
       security:
         - bearerAuth: []
-      parameters:
-        - name: cohortNumber
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "Cohort-18"
       requestBody:
         required: true
         content:
@@ -243,6 +243,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProgramResponseDao'
+        '400':
+          description: Blank/duplicate program name, or end date before start date
         '401':
           description: Missing or invalid JWT
         '403':
@@ -483,11 +485,15 @@ components:
     # ─── Administration ───────────────────────────────────────────────────────
     CohortRequestDao:
       type: object
-      required: [cohortNumber, startDate, endDate]
+      required: [cohortNumber, programId, startDate, endDate]
       properties:
         cohortNumber:
           type: string
           example: "Cohort-18"
+        programId:
+          type: string
+          format: uuid
+          description: ID of the existing program this cohort belongs to
         startDate:
           type: string
           format: date
@@ -498,10 +504,11 @@ components:
     CohortResponseDao:
       type: object
       properties:
-        id: { type: string, format: uuid }
         cohortNumber: { type: string }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date }
+        programId: { type: string, format: uuid }
+        programName: { type: string }
 
     ProgramRequestDao:
       type: object
@@ -523,12 +530,10 @@ components:
     ProgramResponseDao:
       type: object
       properties:
-        id: { type: string, format: uuid }
         programName: { type: string }
         programDuration: { type: integer }
         programStartDate: { type: string, format: date }
         programEndDate: { type: string, format: date }
-        cohortNumber: { type: string }
 
     # ─── Students ─────────────────────────────────────────────────────────────
     AdminCreateStudentRequest:

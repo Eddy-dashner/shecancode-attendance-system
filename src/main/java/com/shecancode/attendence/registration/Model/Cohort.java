@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 
@@ -31,9 +29,8 @@ public class Cohort {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-//    @Column(name = "graduation_date", nullable = false)
-//    private LocalDate graduationDate;
-
-//    @OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Program> programs = new ArrayList<>();
+    // A cohort belongs to exactly one program (Program 1 ── * Cohort).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "program_id", nullable = false)
+    private Program program;
 }
