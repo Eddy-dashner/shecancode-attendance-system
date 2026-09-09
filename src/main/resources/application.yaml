@@ -64,6 +64,11 @@ app:
 
 server:
   port: 8081
+  # Railway (and most PaaS proxies) terminate TLS and forward requests to the
+  # app over plain HTTP, setting X-Forwarded-Proto: https. Honoring these headers
+  # makes Spring/springdoc generate https:// URLs (e.g. the Swagger "servers"
+  # entry) instead of http://, avoiding mixed-content "Failed to fetch" errors.
+  forward-headers-strategy: framework
 
 logging:
   level:
