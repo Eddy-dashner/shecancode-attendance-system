@@ -26,6 +26,7 @@ spring:
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:no-reply@igirerwanda.org}
     password: ${MAIL_PASSWORD:}
+
     properties:
       mail:
         smtp:
