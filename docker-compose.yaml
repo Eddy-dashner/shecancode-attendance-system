@@ -72,7 +72,7 @@ services:
       dockerfile: Dockerfile
     container_name: shecancode-attendance-app
     ports:
-      - "8085:8080"
+      - "8085:8081"
     depends_on:
       postgres:
         condition: service_healthy
