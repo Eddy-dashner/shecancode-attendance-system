@@ -3,6 +3,7 @@ package com.shecancode.attendence.auth.controller;
 import com.shecancode.attendence.auth.dto.ActivateAccountRequest;
 import com.shecancode.attendence.auth.dto.AuthResponse;
 import com.shecancode.attendence.auth.dto.LoginRequest;
+import com.shecancode.attendence.auth.dto.RefreshTokenRequest;
 import com.shecancode.attendence.auth.dto.RegisterRequest;
 import com.shecancode.attendence.auth.dto.ResendActivationRequest;
 import com.shecancode.attendence.auth.service.ActivationService;
@@ -36,12 +37,13 @@ public class AuthController {
      * The very first ADMIN must be seeded via data.sql.
      */
     @PostMapping("/register")
-    @Operation(tags = {"Admin"}, summary = "Register a new user (ADMIN only)",
-            description = "Creates a new ADMIN/TRAINER/STUDENT account and returns a JWT for the created user. " +
-                    "Requires an ADMIN bearer token. The first ADMIN is seeded via data.sql.")
+    @Operation(tags = {"Authentication"}, summary = "Register a new ADMIN (ADMIN only)",
+            description = "Password-based creation of an ADMIN account (bootstrap / adding admins) and returns a JWT. " +
+                    "TRAINER and STUDENT accounts are created via the invitation flow (POST /api/v1/trainers and " +
+                    "POST /api/v1/students) and are rejected here. Requires an ADMIN bearer token.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created; JWT returned"),
-            @ApiResponse(responseCode = "400", description = "Validation failed, or username already taken", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Validation failed, non-ADMIN role rejected, or username taken", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
             @ApiResponse(responseCode = "403", description = "Authenticated caller is not an ADMIN", content = @Content)
     })
@@ -77,8 +79,9 @@ public class AuthController {
     @SecurityRequirements // public
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "If the account exists and is not active, a new email was sent"),
-            @ApiResponse(responseCode = "400", description = "No pending invitation, or cooldown not elapsed", content = @Content),
-            @ApiResponse(responseCode = "409", description = "Account is already activated", content = @Content)
+            @ApiResponse(responseCode = "400", description = "No pending invitation, or cooldown has not elapsed", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Account is already activated", content = @Content),
+            @ApiResponse(responseCode = "502", description = "Email could not be sent", content = @Content)
     })
     public ResponseEntity<Void> resendActivation(@Valid @RequestBody ResendActivationRequest request) {
         activationService.resendActivation(request.getEmail());
@@ -90,16 +93,33 @@ public class AuthController {
      */
     @PostMapping("/login")
     @Operation(tags = {"Authentication"}, summary = "Login and receive a JWT token",
-            description = "Public endpoint. Exchanges username/password for a Bearer JWT. " +
-                    "On failure it returns a generic 401 that does not reveal whether the username exists.")
+            description = "Public endpoint. Exchanges username/password for a Bearer JWT.")
     @SecurityRequirements // public: no bearer lock in Swagger UI
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authenticated; JWT returned"),
             @ApiResponse(responseCode = "400", description = "Missing username or password", content = @Content),
             @ApiResponse(responseCode = "401", description = "Invalid username or password (generic message)", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Account is disabled", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Account is disabled (not yet activated)", content = @Content)
     })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    /**
+     * Public: exchange a refresh token for a new access token.
+     * The refresh token is rotated (single-use) on every call.
+     */
+    @PostMapping("/refresh")
+    @Operation(tags = {"Authentication"}, summary = "Get a new access token using a refresh token",
+            description = "Public endpoint. Exchanges a valid refresh token for a new access token and a new " +
+                    "(rotated) refresh token. The refresh token presented is revoked as soon as it is used.")
+    @SecurityRequirements // public: no bearer lock in Swagger UI
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "New access and refresh tokens returned"),
+            @ApiResponse(responseCode = "400", description = "Missing refresh token", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Refresh token is invalid, expired, revoked, or the account is disabled", content = @Content)
+    })
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
     }
 }

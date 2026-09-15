@@ -2,17 +2,6 @@ openapi: 3.0.3
 info:
   title: SheCanCODE Attendance & Student Management System
   description: >
-    API for authentication, administration (cohorts & programs) and the student
-    lifecycle.
-
-    Auth flow:
-      1. An ADMIN (seeded) creates TRAINER accounts via POST /api/v1/auth/register.
-      2. An ADMIN enrols a STUDENT with just an email + program via
-         POST /api/v1/students/{cohortNumber}. This creates a disabled account and
-         emails the student a one-time activation link.
-      3. The student activates and sets a password via POST /api/v1/auth/activate,
-         which returns a JWT.
-      4. The student completes their profile via PUT /api/v1/students/me/profile.
   version: 2.0.0
 servers:
   - url: http://localhost:8081
@@ -87,6 +76,34 @@ paths:
           description: Invalid username or password (generic message)
         '403':
           description: Account is disabled (not yet activated)
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Get a new access token using a refresh token
+      description: >
+        Public endpoint. Exchanges a valid refresh token for a new access token
+        and a new (rotated) refresh token. The refresh token presented is
+        revoked as soon as it is used.
+      operationId: refresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New access and refresh tokens returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing refresh token
+        '401':
+          description: Refresh token is invalid, expired, revoked, or the account is disabled
 
   /api/v1/auth/activate:
     post:
@@ -469,11 +486,27 @@ components:
           type: string
           example: "P@ssw0rd123"
 
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: The refresh token returned by login, activate, or a previous refresh call
+
     AuthResponse:
       type: object
       properties:
-        token: { type: string }
+        accessToken: { type: string }
+        refreshToken:
+          type: string
+          description: Long-lived, single-use token; exchange it via POST /api/v1/auth/refresh for a new access token.
         tokenType: { type: string, example: "Bearer" }
+        expiresIn:
+          type: integer
+          format: int64
+          description: Access token lifetime in seconds
+          example: 900
         username: { type: string }
         fullName: { type: string }
         role: { type: string, enum: [ADMIN, TRAINER, STUDENT] }

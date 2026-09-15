@@ -12,6 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CohortResponseDao {
+    private UUID cohortId;
     private String cohortNumber;
     private LocalDate startDate;
     private LocalDate endDate;
