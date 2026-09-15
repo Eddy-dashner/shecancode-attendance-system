@@ -19,6 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class AttendanceEventPublisher {
+
+    private static final int MAX_RETRIES = 5;
+
     private final OutboxRepository outboxRepository;
     private final AttendanceProducer producer;
     private final ObjectMapper objectMapper;
@@ -27,12 +30,13 @@ public class AttendanceEventPublisher {
     @Transactional
     public void publishPendingEvents() {
 
-        List<OutboxEvent> eventList = outboxRepository.findByStatus(OutboxStatus.PENDING);
+        List<OutboxEvent> eventList = outboxRepository.findByStatusInAndRetryCountLessThan(
+                List.of(OutboxStatus.PENDING, OutboxStatus.FAILED), MAX_RETRIES);
         if (eventList.isEmpty()) {
             return;
         }
 
-        log.info("Found {} pending outbox event(s).", eventList.size());
+        log.info("Found {} outbox event(s) to (re)publish.", eventList.size());
         for (OutboxEvent outbox : eventList) {
 
             try {
@@ -45,15 +49,22 @@ public class AttendanceEventPublisher {
                 outboxRepository.save(outbox);
             } catch (JsonProcessingException e) {
                 log.error("Failed to deserialize event payload for outbox id: {}", outbox.getId(), e);
-                outbox.setStatus(OutboxStatus.FAILED);
-                outboxRepository.save(outbox);
+                failOutboxEvent(outbox);
 
             } catch (Exception e) {
                 log.error("Failed to publish event for outbox id: {}", outbox.getId(), e);
-                outbox.setStatus(OutboxStatus.FAILED);
-                outboxRepository.save(outbox);
+                failOutboxEvent(outbox);
             }
         }
+    }
+
+    private void failOutboxEvent(OutboxEvent outbox) {
+        outbox.setStatus(OutboxStatus.FAILED);
+        outbox.setRetryCount(outbox.getRetryCount() + 1);
+        if (outbox.getRetryCount() >= MAX_RETRIES) {
+            log.error("Outbox event {} exhausted {} retries; giving up.", outbox.getId(), MAX_RETRIES);
+        }
+        outboxRepository.save(outbox);
     }
 }
 

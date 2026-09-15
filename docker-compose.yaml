@@ -8,16 +8,16 @@ services:
       # host 5433 -> container 5432 (host 5432 is taken by a local PostgreSQL 16 install)
       - "5433:5432"
     environment:
-      POSTGRES_DB: shecancode
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-shecancode}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - shecancode-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d shecancode"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-shecancode}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -79,11 +79,14 @@ services:
       kafka:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shecancode
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-shecancode}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
       APP_JWT_SECRET: change-this-to-a-long-secure-secret-key-at-least-32-bytes
-      APP_JWT_EXPIRATION_MS: 86400000
+      APP_JWT_ACCESS_TOKEN_EXPIRATION_MS: 900000
+      APP_JWT_REFRESH_TOKEN_EXPIRATION_MS: 604800000
+      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@igirerwanda.org}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?set MAIL_PASSWORD in a local .env file (gitignored), not here}
 
       SPRING_KAFKA_BOOTSTRAP_SERVERS: shecancode-kafka:29092
     networks:

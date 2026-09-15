@@ -12,11 +12,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType;
+    // Access token lifetime in seconds, for the client to schedule its own refresh.
+    private long expiresIn;
     private String username;
     private String fullName;
     private Role role;
-    private String tokenType;
     // Lets the frontend route: PROFILE_INCOMPLETE -> profile completion, else dashboard.
     private AccountStatus accountStatus;
 }

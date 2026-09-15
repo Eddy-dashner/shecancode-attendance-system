@@ -12,21 +12,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
     info = @Info(
-        title = "SheCanCODE Attendance System API",
-        version = "1.0",
-        description = "Attendance and stipend tracking system. Use the Authorize button to supply your JWT token."
+        title = "SheCanCODE Attendance & Student Management System",
+        version = "2.0.0"
     ),
     security = @SecurityRequirement(name = "bearerAuth"),
     // Declares the display order and description of every Swagger section.
-    // Operations are grouped by who performs them, then by domain.
     tags = {
-        @Tag(name = "Admin", description = "Actions performed by an ADMIN: user registration and student administration (invite, bulk-invite, list, drop-out)"),
-        @Tag(name = "Student", description = "Actions a STUDENT performs on their own account: view and complete their profile"),
-        @Tag(name = "Programs", description = "Program management (ADMIN only)"),
-        @Tag(name = "Cohorts", description = "Cohort management within a program (ADMIN only)"),
+        @Tag(name = "Authentication", description = "Register (ADMIN), login, and student account activation"),
+        @Tag(name = "Administration", description = "Admin setup for Cohorts and Programs"),
         @Tag(name = "Trainers", description = "Trainer invitation (ADMIN only)"),
-        @Tag(name = "Attendance", description = "Bulk attendance recording and updates (ADMIN or TRAINER)"),
-        @Tag(name = "Authentication", description = "Public authentication flows: login, account activation and resend")
+        @Tag(name = "Students", description = "Student enrolment, activation profile and lookup"),
+        @Tag(name = "Attendance", description = "Bulk attendance recording and updates (ADMIN or TRAINER)")
     }
 )
 @SecurityScheme(
