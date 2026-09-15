@@ -45,4 +45,8 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build and run tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/shecancode
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
         run: ./mvnw clean test
