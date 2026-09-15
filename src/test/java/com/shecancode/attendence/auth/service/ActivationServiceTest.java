@@ -5,6 +5,7 @@ import com.shecancode.attendence.auth.dto.AuthResponse;
 import com.shecancode.attendence.auth.model.AccountStatus;
 import com.shecancode.attendence.auth.model.ActivationToken;
 import com.shecancode.attendence.auth.model.AppUser;
+import com.shecancode.attendence.auth.model.RefreshToken;
 import com.shecancode.attendence.auth.model.Role;
 import com.shecancode.attendence.auth.repository.ActivationTokenRepository;
 import com.shecancode.attendence.auth.repository.UserRepository;
@@ -37,6 +38,7 @@ class ActivationServiceTest {
     @Mock private StudentRepository studentRepository;
     @Mock private EmailService emailService;
     @Mock private JwtService jwtService;
+    @Mock private RefreshTokenService refreshTokenService;
 
     private ActivationService activationService;
 
@@ -49,7 +51,7 @@ class ActivationServiceTest {
         };
         activationService = new ActivationService(
                 userRepository, tokenRepository, studentRepository, emailService,
-                encoder, jwtService,
+                encoder, jwtService, refreshTokenService,
                 "http://localhost:5173", 48, 60);
     }
 
@@ -86,7 +88,9 @@ class ActivationServiceTest {
         ActivationToken token = tokenFor(user, Instant.now().plus(1, ChronoUnit.HOURS), null);
         when(tokenRepository.findByToken("tok-123")).thenReturn(Optional.of(token));
         when(tokenRepository.findByUserAndUsedAtIsNull(user)).thenReturn(Collections.emptyList());
-        when(jwtService.generateToken(user)).thenReturn("jwt");
+        when(jwtService.generateAccessToken(user)).thenReturn("jwt");
+        when(refreshTokenService.issue(user)).thenReturn(
+                RefreshToken.builder().token("refresh-jwt").user(user).build());
 
         AuthResponse resp = activationService.activate(req("tok-123", "Passw0rd!", "Passw0rd!"));
 
@@ -94,7 +98,8 @@ class ActivationServiceTest {
         assertTrue(user.isEnabled());
         assertEquals(AccountStatus.PROFILE_INCOMPLETE, user.getAccountStatus());
         assertNotNull(token.getUsedAt(), "token must be single-used after activation");
-        assertEquals("jwt", resp.getToken());
+        assertEquals("jwt", resp.getAccessToken());
+        assertEquals("refresh-jwt", resp.getRefreshToken());
         assertEquals(AccountStatus.PROFILE_INCOMPLETE, resp.getAccountStatus());
         verify(userRepository).save(user);
     }
@@ -107,7 +112,9 @@ class ActivationServiceTest {
         ActivationToken token = tokenFor(trainer, Instant.now().plus(1, ChronoUnit.HOURS), null);
         when(tokenRepository.findByToken("tok-123")).thenReturn(Optional.of(token));
         when(tokenRepository.findByUserAndUsedAtIsNull(trainer)).thenReturn(Collections.emptyList());
-        when(jwtService.generateToken(trainer)).thenReturn("jwt");
+        when(jwtService.generateAccessToken(trainer)).thenReturn("jwt");
+        when(refreshTokenService.issue(trainer)).thenReturn(
+                RefreshToken.builder().token("refresh-jwt").user(trainer).build());
 
         activationService.activate(req("tok-123", "Passw0rd!", "Passw0rd!"));
 

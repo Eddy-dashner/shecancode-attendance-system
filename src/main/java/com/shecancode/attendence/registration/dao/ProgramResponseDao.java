@@ -3,6 +3,7 @@ package com.shecancode.attendence.registration.dao;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Builder
 @Data
@@ -11,6 +12,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProgramResponseDao {
+    private UUID programId;
+
     private String programName;
 
     private Integer programDuration;

@@ -56,4 +56,8 @@ public class OutboxEvent {
      */
     private Instant processedAt;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private int retryCount = 0;
+
 }

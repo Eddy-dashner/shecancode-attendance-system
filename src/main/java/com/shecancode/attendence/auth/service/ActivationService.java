@@ -43,6 +43,7 @@ public class ActivationService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     private final String frontendUrl;
     private final long tokenExpiryHours;
@@ -55,6 +56,7 @@ public class ActivationService {
             EmailService emailService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            RefreshTokenService refreshTokenService,
             @Value("${app.frontend-url}") String frontendUrl,
             @Value("${app.activation.token-expiry-hours}") long tokenExpiryHours,
             @Value("${app.activation.resend-cooldown-seconds}") long resendCooldownSeconds
@@ -65,6 +67,7 @@ public class ActivationService {
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
         this.frontendUrl = frontendUrl;
         this.tokenExpiryHours = tokenExpiryHours;
         this.resendCooldownSeconds = resendCooldownSeconds;
@@ -209,8 +212,10 @@ public class ActivationService {
 
     private AuthResponse buildAuthResponse(AppUser user) {
         return AuthResponse.builder()
-                .token(jwtService.generateToken(user))
+                .accessToken(jwtService.generateAccessToken(user))
+                .refreshToken(refreshTokenService.issue(user).getToken())
                 .tokenType("Bearer")
+                .expiresIn(jwtService.getAccessTokenExpirationSeconds())
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .role(user.getRole())

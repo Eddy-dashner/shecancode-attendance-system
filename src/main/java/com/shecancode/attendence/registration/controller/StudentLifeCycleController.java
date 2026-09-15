@@ -17,12 +17,12 @@ import java.util.UUID;
 @RestController
 @RequestMapping( "/api/v1/students")
 @RequiredArgsConstructor
-@Tag(name = "Admin", description = "Actions performed by an ADMIN: user registration and student administration (invite, bulk-invite, list, drop-out)")
+@Tag(name = "Students")
 public class StudentLifeCycleController {
     private final StudentLifeCycleService lifeCycleService;
 
     @PatchMapping("/{studentId}/dropout")
-    @Operation(summary = "Mark a student as DROPPED_OUT (ADMIN only)",
+    @Operation(summary = "Mark a student as dropped out (ADMIN only)",
             description = "Idempotency is NOT allowed: calling this on an already dropped-out student returns 409.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Student marked as DROPPED_OUT"),
