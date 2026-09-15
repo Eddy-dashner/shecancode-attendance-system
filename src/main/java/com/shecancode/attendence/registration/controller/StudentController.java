@@ -30,10 +30,10 @@ public class StudentController {
     }
 
     @PostMapping
-    @Operation(tags = {"Admin"}, summary = "Invite a student (ADMIN only)",
-            description = "Creates a PENDING student and a disabled login account from just an email, program and " +
-                    "cohort, then emails the student an activation link. The program and cohort must already exist, " +
-                    "and the cohort must belong to the program.")
+    @Operation(tags = {"Students"}, summary = "Invite a student (ADMIN only)",
+            description = "Creates a PENDING student and a disabled login account from an email, program " +
+                    "and cohort, then emails the student an activation link. The program and cohort must already " +
+                    "exist, and the cohort must belong to the program.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Student invited; activation email sent"),
             @ApiResponse(responseCode = "400", description = "Validation failed, or cohort does not belong to program", content = @Content),
@@ -51,7 +51,7 @@ public class StudentController {
     }
 
     @GetMapping("/me")
-    @Operation(tags = {"Student"}, summary = "Get my profile (STUDENT only)",
+    @Operation(tags = {"Students"}, summary = "Get my profile (STUDENT only)",
             description = "Returns the authenticated student's own profile.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Profile returned"),
@@ -65,7 +65,7 @@ public class StudentController {
     }
 
     @PutMapping("/me/profile")
-    @Operation(tags = {"Student"}, summary = "Complete my profile (STUDENT only)",
+    @Operation(tags = {"Students"}, summary = "Complete my profile (STUDENT only)",
             description = "The authenticated student fills in their remaining details after activating. " +
                     "Moves the record from PENDING to ACTIVE.")
     @ApiResponses({
@@ -82,7 +82,7 @@ public class StudentController {
     }
 
     @GetMapping()
-    @Operation(tags = {"Admin"}, summary = "List all students (ADMIN or TRAINER)",
+    @Operation(tags = {"Students"}, summary = "List all students (ADMIN or TRAINER)",
             description = "Returns all registered students. TRAINER has read-only access per the role model.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List returned"),

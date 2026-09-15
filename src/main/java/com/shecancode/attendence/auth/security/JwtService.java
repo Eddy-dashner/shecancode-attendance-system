@@ -22,12 +22,12 @@ public class JwtService {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration-ms}")
-    private long jwtExpirationMs;
+    @Value("${app.jwt.access-token-expiration-ms}")
+    private long accessTokenExpirationMs;
 
     // ── Token generation ─────────────────────────────────────────────────────
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
         // Embed the role so it can be read without a DB call
         extraClaims.put("roles", userDetails.getAuthorities()
@@ -37,12 +37,16 @@ public class JwtService {
         return buildToken(extraClaims, userDetails);
     }
 
+    public long getAccessTokenExpirationSeconds() {
+        return accessTokenExpirationMs / 1000;
+    }
+
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
                 .signWith(getSigningKey())
                 .compact();
     }

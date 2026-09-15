@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/cohort")
-@Tag(name = "Cohorts", description = "Cohort management (ADMIN only)")
+@Tag(name = "Administration")
 public class CohortController {
     private final  CohortService cohortService;
 
@@ -43,10 +43,11 @@ public class CohortController {
     @Operation(summary = "Create a cohort (ADMIN only)",
             description = "Creates a new cohort. Cohort number must be unique; endDate must not be before startDate.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Cohort created"),
+            @ApiResponse(responseCode = "201", description = "Cohort created successfully"),
             @ApiResponse(responseCode = "400", description = "Blank cohort number or endDate before startDate", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
             @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "The referenced program was not found", content = @Content),
             @ApiResponse(responseCode = "409", description = "A cohort with this number already exists", content = @Content)
     })
     @PreAuthorize("hasRole('ADMIN')")

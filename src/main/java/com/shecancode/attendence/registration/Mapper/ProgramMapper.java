@@ -17,6 +17,7 @@ public class ProgramMapper {
 
     public static ProgramResponseDao ToResponseDao(Program program){
         return ProgramResponseDao.builder()
+                .programId(program.getId())
                 .programDuration(program.getProgramDuration())
                 .programName(program.getProgramName())
                 .programStartDate(program.getProgramStartDate())

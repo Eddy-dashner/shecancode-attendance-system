@@ -13,6 +13,7 @@ public class CohortMapper {
 
         Program program = cohort.getProgram();
         return CohortResponseDao.builder()
+                .cohortId(cohort.getId())
                 .cohortNumber(cohort.getCohortNumber())
                 .startDate(cohort.getStartDate())
                 .endDate(cohort.getEndDate())
