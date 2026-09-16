@@ -84,7 +84,6 @@ class StudentRegistrationServiceTest {
         assertEquals("joseph@gmail.com", response.getEmail());
         assertEquals("Cohort-10", response.getCohortNumber());
 
-        // A disabled, INVITED student account with no password is created
         ArgumentCaptor<AppUser> userCaptor = ArgumentCaptor.forClass(AppUser.class);
         verify(userRepository).save(userCaptor.capture());
         AppUser createdUser = userCaptor.getValue();
@@ -133,7 +132,6 @@ class StudentRegistrationServiceTest {
     @Test
     @DisplayName("Cohort must belong to the selected program")
     void createStudentAccount_cohortNotInProgram_throws() {
-        // The requested cohort belongs to a different program than the requested one.
         Program otherProgram = Program.builder().id(UUID.randomUUID()).programName("Frontend").build();
         Cohort mismatchedCohort = Cohort.builder().id(cohortId).cohortNumber("Cohort-10").program(otherProgram).build();
 

@@ -36,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         log.debug("JWT Filter: Authorization header: {}", authHeader != null ? authHeader.substring(0, Math.min(authHeader.length(), 20)) + "..." : "null");
 
-        // Pass through if no Bearer token present
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.debug("JWT Filter: No Bearer token found, passing through");
             filterChain.doFilter(request, response);
@@ -50,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             final String username = jwtService.extractUsername(jwt);
             log.debug("Extracted username from JWT: {}", username);
 
-            // Only authenticate if not already authenticated
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 log.debug("Loaded user details for {}: {}", username, userDetails.getAuthorities());

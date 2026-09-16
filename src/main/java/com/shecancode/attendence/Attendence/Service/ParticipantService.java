@@ -33,27 +33,21 @@ public class ParticipantService {
     public void updateProgress(Student student, Program program) {
         int totalDays = program.getProgramDuration();
 
-        // 1. Calculate Weighted Absences using corrected Repository method names
-        // Full Absence = 1.0 point loss
+        // Full absence = 1.0 point loss, communicated absence = 0.5 point loss.
         long fullAbsences = attendanceRepository.countByStudentAndProgramAndAttendanceStatus(
                 student, program, AttendanceStatus.ABSENT);
 
-        // Communicated Absence = 0.5 point loss
         long commAbsences = attendanceRepository.countByStudentAndProgramAndAttendanceStatus(
                 student, program, AttendanceStatus.ABSENT_COMMUNICATED);
 
-        // 2. Calculate points (Using double for 0.5 precision)
         double pointsLost = (fullAbsences * 1.0) + (commAbsences * 0.5);
         double currentPoints = totalDays - pointsLost;
 
-        // 3. Calculate health percentage
         double percentage = (currentPoints * 100.0) / totalDays;
 
-        // 4. Calculate Consecutive Absences and Color
         int consecutiveAbsences = calculateConsecutiveAbsences(student, program);
         ProgressColor color = determineColor(percentage);
 
-        // 5. Upsert (Update or Insert) the Progress record
         ParticipantProgress progress = participantProgressRepository.findByStudentAndProgram(student, program)
                 .orElse(ParticipantProgress.builder()
                         .student(student)
@@ -84,7 +78,6 @@ public class ParticipantService {
     }
 
     public int calculateConsecutiveAbsences(Student student, Program program) {
-        // Fetch historical records ordered by date descending (Newest first)
         List<Attendance> records = attendanceRepository
                 .findByStudentAndProgramOrderByAttendanceRecordedDateDesc(student, program);
 

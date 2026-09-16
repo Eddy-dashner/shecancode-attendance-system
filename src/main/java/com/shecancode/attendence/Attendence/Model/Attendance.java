@@ -20,7 +20,7 @@ import java.util.UUID;
         // Highly recommended for the bulk lookup query we wrote
         @Index(name = "idx_attendance_date_cohort", columnList = "attendance_recorded_date, cohort_id")
 })
-@EntityListeners(AuditingEntityListener.class) // Automates createdAt/updatedAt
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @Builder
@@ -40,7 +40,6 @@ public class Attendance {
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
 
-    // Optional (if you use cohorts)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cohort_id")
     private Cohort cohort;

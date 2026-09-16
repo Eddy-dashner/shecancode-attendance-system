@@ -1,12 +1,12 @@
 package com.shecancode.attendence.auth.dto;
 
-import com.shecancode.attendence.auth.model.AccountStatus;
-import com.shecancode.attendence.auth.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// username/fullName/role/accountStatus are already embedded in accessToken's claims,
+// so the client decodes the JWT instead of reading them off this response.
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,9 +17,4 @@ public class AuthResponse {
     private String tokenType;
     // Access token lifetime in seconds, for the client to schedule its own refresh.
     private long expiresIn;
-    private String username;
-    private String fullName;
-    private Role role;
-    // Lets the frontend route: PROFILE_INCOMPLETE -> profile completion, else dashboard.
-    private AccountStatus accountStatus;
 }

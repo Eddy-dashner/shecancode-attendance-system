@@ -102,10 +102,6 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(jwtService.getAccessTokenExpirationSeconds())
-                .username(user.getUsername())
-                .fullName(user.getFullName())
-                .role(user.getRole())
-                .accountStatus(user.getAccountStatus())
                 .build();
     }
 }
