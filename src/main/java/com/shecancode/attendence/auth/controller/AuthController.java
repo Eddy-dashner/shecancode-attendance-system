@@ -31,11 +31,7 @@ public class AuthController {
     private final AuthService authService;
     private final ActivationService activationService;
 
-    /**
-     * Register a new user.
-     * Only ADMIN can create other users (trainer / student accounts).
-     * The very first ADMIN must be seeded via data.sql.
-     */
+    // The very first ADMIN must be seeded via data.sql.
     @PostMapping("/register")
     @Operation(tags = {"Authentication"}, summary = "Register a new ADMIN (ADMIN only)",
             description = "Password-based creation of an ADMIN account (bootstrap / adding admins) and returns a JWT. " +
@@ -52,10 +48,6 @@ public class AuthController {
         return new ResponseEntity<>(authService.register(request), HttpStatus.CREATED);
     }
 
-    /**
-     * Public account activation for students.
-     * Exchanges a one-time email token + chosen password for an enabled account and a JWT.
-     */
     @PostMapping("/activate")
     @Operation(tags = {"Authentication"}, summary = "Activate a student account and set a password",
             description = "Public endpoint. A student uses the token from their activation email, together with " +
@@ -69,9 +61,6 @@ public class AuthController {
         return ResponseEntity.ok(activationService.activate(request));
     }
 
-    /**
-     * Public: request a fresh activation email for a not-yet-activated account.
-     */
     @PostMapping("/resend-activation")
     @Operation(tags = {"Authentication"}, summary = "Resend an activation email",
             description = "Public endpoint. Invalidates the previous activation token, issues a new one, and " +
@@ -88,9 +77,6 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Public login — returns a JWT on success.
-     */
     @PostMapping("/login")
     @Operation(tags = {"Authentication"}, summary = "Login and receive a JWT token",
             description = "Public endpoint. Exchanges username/password for a Bearer JWT.")
@@ -105,10 +91,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    /**
-     * Public: exchange a refresh token for a new access token.
-     * The refresh token is rotated (single-use) on every call.
-     */
     @PostMapping("/refresh")
     @Operation(tags = {"Authentication"}, summary = "Get a new access token using a refresh token",
             description = "Public endpoint. Exchanges a valid refresh token for a new access token and a new " +

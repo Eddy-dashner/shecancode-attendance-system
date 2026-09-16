@@ -11,11 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-/**
- * Admin-facing payload to enrol a student. The admin supplies only the email and
- * the program/cohort assignment; the student fills in the rest of their profile
- * after activating.
- */
+// The admin supplies only the email and program/cohort assignment; the student
+// fills in the rest of their profile after activating.
 @Builder
 @Data
 @NoArgsConstructor

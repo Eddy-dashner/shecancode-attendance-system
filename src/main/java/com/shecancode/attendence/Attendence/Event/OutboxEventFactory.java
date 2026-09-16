@@ -18,23 +18,14 @@ public class OutboxEventFactory {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Creates an OutboxEvent for a newly recorded attendance.
-     */
     public OutboxEvent createAttendanceOutboxEvent(Attendance attendance) {
         return buildOutboxEvent(attendance, EventType.ATTENDANCE_RECORDED);
     }
 
-    /**
-     * Creates an OutboxEvent when attendance is updated.
-     */
     public OutboxEvent createAttendanceUpdatedEvent(Attendance attendance) {
         return buildOutboxEvent(attendance, EventType.ATTENDANCE_UPDATED);
     }
 
-    /**
-     * Builds the OutboxEvent.
-     */
     private OutboxEvent buildOutboxEvent(
             Attendance attendance,
             EventType eventType) {
@@ -63,9 +54,6 @@ public class OutboxEventFactory {
                 .build();
     }
 
-    /**
-     * Converts AttendanceEvent to JSON.
-     */
     private String convertToJson(AttendanceEvent event) {
         try {
             return objectMapper.writeValueAsString(event);

@@ -1,6 +1,7 @@
 package com.shecancode.attendence.registration.service;
 
 import com.shecancode.attendence.registration.Exception.CohortAlreadyExistException;
+import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
 import com.shecancode.attendence.registration.Mapper.CohortMapper;
 import com.shecancode.attendence.registration.Model.Cohort;
@@ -72,6 +73,12 @@ public class CohortService {
         return cohortRepository.findAll().stream()
                 .map(CohortMapper::toCohortResponseDao)
                 .collect(Collectors.toList());
+    }
+
+    public CohortResponseDao getCohortById(UUID cohortId) {
+        Cohort cohort = cohortRepository.findById(cohortId)
+                .orElseThrow(() -> new CohortNotFoundException("Cohort [" + cohortId + "] not found."));
+        return CohortMapper.toCohortResponseDao(cohort);
     }
 }
 

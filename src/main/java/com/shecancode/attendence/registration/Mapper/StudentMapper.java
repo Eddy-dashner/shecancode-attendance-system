@@ -40,9 +40,8 @@ public class StudentMapper {
         student.setPhoneNumber(requestDao.getPhoneNumber());
         student.setEmail(requestDao.getEmail());
         student.setHomeAddress(requestDao.getHomeAddress());
-        student.setStatus(Status.ACTIVE); // Automatically set new students to ACTIVE
+        student.setStatus(Status.ACTIVE);
         student.setCohort(Cohort.builder().cohortNumber(requestDao.getCohortNumber()).build());
-//        student.set;// Use the saved cohort with its cohortNumber
 
         student.setCurrentOccupation(requestDao.getCurrentOccupation());
 //        student.setDaysRemaining(40);

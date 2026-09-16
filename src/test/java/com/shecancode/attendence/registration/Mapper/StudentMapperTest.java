@@ -24,8 +24,6 @@ class StudentMapperTest {
 
     @Test
     void testMappingStudent_toResponseDTO_isSuccessful() {
-        //arranging
-
         Student student = Student.builder()
                 .id(UUID.randomUUID())
                 .studentFirstName("bob")
@@ -39,9 +37,7 @@ class StudentMapperTest {
                 .cohort(Cohort.builder().cohortNumber("cohort-10").build())
 //                .totalGraduationDays(200)
                 .build();
-         //act: map entity to dto
         StudentResponseDao studentResponseDao = StudentMapper.toDTO(student);
-        //assertions:
         assertNotNull(studentResponseDao);
         assertEquals(student.getStudentFirstName(),(studentResponseDao.getStudentFirstName()));
     }

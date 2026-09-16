@@ -15,10 +15,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Returns a clean JSON 403 response when an authenticated user
- * lacks the required role for an endpoint.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
