@@ -162,7 +162,6 @@ private final JwtAuthenticationFilter jwtAuthFilter;
 
                         .requestMatchers("/api/v1/cohorts/**").hasRole("ADMIN")
 
-                        // Trainer invitation (create) is ADMIN-only.
                         .requestMatchers("/api/v1/trainers/**").hasRole("ADMIN")
 
                         // Student self-service (own profile) MUST come before the broader
@@ -187,7 +186,6 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.GET, "/api/v1/programs/*/cohorts/*/attendance/**")
                         .authenticated()
 
-                        // Any other /programs path remains ADMIN-only.
                         .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")

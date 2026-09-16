@@ -73,9 +73,6 @@ public class ActivationService {
         this.resendCooldownSeconds = resendCooldownSeconds;
     }
 
-    // ── Invitation dispatch ──────────────────────────────────────────────────
-
-    /** Issues a token and emails a student their enrolment invitation. */
     @Transactional
     public void sendStudentInvitation(AppUser user, Student student) {
         ActivationToken token = issueFreshToken(user);
@@ -87,7 +84,6 @@ public class ActivationService {
                 token.getExpiresAt());
     }
 
-    /** Issues a token and emails a trainer their invitation. */
     @Transactional
     public void sendTrainerInvitation(AppUser user) {
         ActivationToken token = issueFreshToken(user);
@@ -98,12 +94,6 @@ public class ActivationService {
                 token.getExpiresAt());
     }
 
-    // ── Activation ───────────────────────────────────────────────────────────
-
-    /**
-     * Validates the token, sets the password, enables the account, advances the
-     * account status, and single-uses the token. Returns a JWT.
-     */
     @Transactional
     public AuthResponse activate(ActivateAccountRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
@@ -142,12 +132,6 @@ public class ActivationService {
         return buildAuthResponse(user);
     }
 
-    // ── Resend ────────────────────────────────────────────────────────────────
-
-    /**
-     * Re-issues an activation email for a not-yet-activated account, invalidating
-     * the previous token. Guarded by a simple per-account cooldown.
-     */
     @Transactional
     public void resendActivation(String email) {
         AppUser user = userRepository.findByUsername(email)
@@ -174,8 +158,6 @@ public class ActivationService {
         }
         log.info("Activation email resent to [{}]", email);
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private ActivationToken issueFreshToken(AppUser user) {
         Instant now = Instant.now();
@@ -216,10 +198,6 @@ public class ActivationService {
                 .refreshToken(refreshTokenService.issue(user).getToken())
                 .tokenType("Bearer")
                 .expiresIn(jwtService.getAccessTokenExpirationSeconds())
-                .username(user.getUsername())
-                .fullName(user.getFullName())
-                .role(user.getRole())
-                .accountStatus(user.getAccountStatus())
                 .build();
     }
 }

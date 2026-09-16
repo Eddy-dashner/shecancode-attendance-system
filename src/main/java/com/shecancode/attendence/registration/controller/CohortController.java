@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/cohort")
@@ -37,6 +39,20 @@ public class CohortController {
     public ResponseEntity<?> getAllCohorts() {
         log.info("Retrieving all cohorts");
         return ResponseEntity.ok(cohortService.getAllCohorts());
+    }
+
+    @GetMapping("/{cohortId}")
+    @Operation(summary = "Get a cohort by id (ADMIN only)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cohort returned"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Cohort not found", content = @Content)
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CohortResponseDao> getCohortById(@PathVariable UUID cohortId) {
+        log.info("Retrieving cohort [{}]", cohortId);
+        return ResponseEntity.ok(cohortService.getCohortById(cohortId));
     }
 
     @PostMapping

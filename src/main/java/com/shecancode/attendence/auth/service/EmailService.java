@@ -46,7 +46,6 @@ public class EmailService {
         this.fromAddress = fromAddress;
     }
 
-    /** Invitation for a newly enrolled student, including their program/cohort. */
     public void sendStudentInvitation(String toEmail, String programName, String cohortNumber,
                                       String activationUrl, Instant expiresAt) {
         Context ctx = new Context();
@@ -61,7 +60,6 @@ public class EmailService {
         send(toEmail, "Activate your " + appName + " student account", html);
     }
 
-    /** Invitation for a newly created trainer. */
     public void sendTrainerInvitation(String toEmail, String fullName,
                                       String activationUrl, Instant expiresAt) {
         Context ctx = new Context();

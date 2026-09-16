@@ -88,7 +88,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
-    // ── 400: activation token & cohort/program integrity failures ──
     @ExceptionHandler({
             ActivationTokenException.class,
             CohortProgramMismatchException.class
@@ -103,7 +102,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // ── 404: unhandled domain "not found" exceptions (previously fell through to 500) ──
+    // These previously fell through to a generic 500.
     @ExceptionHandler({
             CohortNotFoundException.class,
             ProgramNotFoundException.class,
@@ -119,7 +118,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    // ── 409: duplicate / state-conflict exceptions (previously fell through to 500) ──
+    // These previously fell through to a generic 500.
     @ExceptionHandler({
             CohortAlreadyExistException.class,
             EmailAlreadyExistException.class,
@@ -136,7 +135,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    // ── 502: email delivery failed. Never leak SMTP internals to the client. ──
+    // Never leak SMTP internals to the client.
     @ExceptionHandler(MailException.class)
     public ResponseEntity<ErrorResponse> handleMailException(MailException ex, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class AttendanceMapper {
-    // Map from single student attendance DTO to Attendance entity
     public static Attendance toAttendance(StudentAttendanceRequestDto studentDto,
                                           Student student,
                                           Program program,
@@ -37,14 +36,12 @@ public class AttendanceMapper {
                 .build();
     }
 
-    // Map single Attendance entity to AttendanceResponse DTO
     public static AttendanceResponse toResponseDTO(Attendance attendance, Integer daysRemaining) {
         if (attendance == null) return null;
 
         return AttendanceResponse.builder()
                 .attendanceId(attendance.getAttendanceId())
                 .studentId(attendance.getStudent().getId())
-                // Using a helper for name concatenation to keep it clean
                 .studentName(formatFullName(attendance.getStudent()))
                 .cohortId(attendance.getCohort() != null ? attendance.getCohort().getId() : null)
                 .cohortNumber(attendance.getCohort() != null ? attendance.getCohort().getCohortNumber() : "N/A")
@@ -67,7 +64,7 @@ public class AttendanceMapper {
 
         return attendances.stream()
                 .map(attendance -> toResponseDTO(attendance, daysRemaining))
-                .toList(); // Java 16+ syntax
+                .toList();
     }
 
     private static String formatFullName(Student student) {

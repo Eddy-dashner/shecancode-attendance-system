@@ -100,7 +100,6 @@ class ActivationServiceTest {
         assertNotNull(token.getUsedAt(), "token must be single-used after activation");
         assertEquals("jwt", resp.getAccessToken());
         assertEquals("refresh-jwt", resp.getRefreshToken());
-        assertEquals(AccountStatus.PROFILE_INCOMPLETE, resp.getAccountStatus());
         verify(userRepository).save(user);
     }
 

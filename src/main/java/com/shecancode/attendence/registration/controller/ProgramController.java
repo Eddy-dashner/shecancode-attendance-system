@@ -17,6 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/programs")
@@ -27,6 +30,33 @@ public class ProgramController {
 
     public ProgramController(ProgramService programService) {
         this.programService = programService;
+    }
+
+    @GetMapping
+    @Operation(summary = "List all programs (ADMIN only)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content)
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProgramResponseDao>> getAllPrograms() {
+        log.info("Retrieving all programs");
+        return ResponseEntity.ok(programService.getAllPrograms());
+    }
+
+    @GetMapping("/{programId}")
+    @Operation(summary = "Get a program by id (ADMIN only)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Program returned"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Program not found", content = @Content)
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProgramResponseDao> getProgramById(@PathVariable UUID programId) {
+        log.info("Retrieving program [{}]", programId);
+        return ResponseEntity.ok(programService.getProgramById(programId));
     }
 
     @PostMapping

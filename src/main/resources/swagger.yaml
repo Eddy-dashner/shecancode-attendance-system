@@ -507,12 +507,6 @@ components:
           format: int64
           description: Access token lifetime in seconds
           example: 900
-        username: { type: string }
-        fullName: { type: string }
-        role: { type: string, enum: [ADMIN, TRAINER, STUDENT] }
-        accountStatus:
-          type: string
-          enum: [INVITED, PROFILE_INCOMPLETE, PROFILE_COMPLETE, ACTIVE]
           description: Frontend routes on this — PROFILE_INCOMPLETE → profile page, else dashboard.
 
     # ─── Administration ───────────────────────────────────────────────────────

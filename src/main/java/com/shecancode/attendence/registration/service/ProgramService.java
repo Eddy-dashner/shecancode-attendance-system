@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
 import com.shecancode.attendence.registration.Mapper.ProgramMapper;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
@@ -23,22 +24,15 @@ public class ProgramService {
         this.programRepository = programRepository;
     }
 
-    /**
-     * Creates a program. A program stands on its own and does not require a cohort;
-     * cohorts are attached to a program later via cohort creation.
-     *
-     * @param programRequest the program to create
-     * @return the created program
-     */
+    // A program stands on its own and does not require a cohort; cohorts are
+    // attached to a program later via cohort creation.
     public ProgramResponseDao createProgram(ProgramRequestDao programRequest){
 
-        // 1. Reject duplicate program names
         if (programRepository.existsByProgramName(programRequest.getProgramName())) {
             log.error("Duplicate program name: {}", LoggingUtils.sanitizeForLogging(programRequest.getProgramName()));
             throw new IllegalArgumentException("A program named '" + programRequest.getProgramName() + "' already exists.");
         }
 
-        // 2. Validate Dates using the request object
         if (programRequest.getProgramStartDate() != null && programRequest.getProgramEndDate() != null) {
             if (programRequest.getProgramEndDate().isBefore(programRequest.getProgramStartDate())) {
                 throw new IllegalArgumentException("End date cannot be before start date");
@@ -63,5 +57,11 @@ public class ProgramService {
         return programRepository.findAll().stream()
                 .map(ProgramMapper::ToResponseDao)
                 .toList();
+    }
+
+    public ProgramResponseDao getProgramById(UUID programId) {
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new ProgramNotFoundException("Program [" + programId + "] not found."));
+        return ProgramMapper.ToResponseDao(program);
     }
 }
