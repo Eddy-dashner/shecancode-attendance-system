@@ -1,5 +1,6 @@
 package com.shecancode.attendence.auth.security;
 
+import com.shecancode.attendence.auth.model.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -25,16 +26,19 @@ public class JwtService {
     @Value("${app.jwt.access-token-expiration-ms}")
     private long accessTokenExpirationMs;
 
-    // ── Token generation ─────────────────────────────────────────────────────
-
-    public String generateAccessToken(UserDetails userDetails) {
+    public String generateAccessToken(AppUser user) {
         Map<String, Object> extraClaims = new HashMap<>();
-        // Embed the role so it can be read without a DB call
-        extraClaims.put("roles", userDetails.getAuthorities()
+        // Embed everything a caller commonly needs so most requests can be
+        // authorized/rendered without a DB round trip.
+        extraClaims.put("roles", user.getAuthorities()
                 .stream()
                 .map(a -> a.getAuthority())
                 .toList());
-        return buildToken(extraClaims, userDetails);
+        extraClaims.put("userId", user.getId());
+        extraClaims.put("fullName", user.getFullName());
+        extraClaims.put("role", user.getRole().name());
+        extraClaims.put("accountStatus", user.getAccountStatus().name());
+        return buildToken(extraClaims, user);
     }
 
     public long getAccessTokenExpirationSeconds() {
@@ -51,8 +55,6 @@ public class JwtService {
                 .compact();
     }
 
-    // ── Token validation ─────────────────────────────────────────────────────
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
@@ -61,8 +63,6 @@ public class JwtService {
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
-
-    // ── Claims extraction ─────────────────────────────────────────────────────
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

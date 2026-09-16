@@ -34,5 +34,4 @@ import org.springframework.context.annotation.Configuration;
     in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
-    // Configuration is fully declarative via annotations
 }

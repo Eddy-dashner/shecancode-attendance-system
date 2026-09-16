@@ -27,7 +27,6 @@ class ProgramServiceTest {
 
     @Test
     void test_createProgram_Successful() {
-        // A program is created on its own; it does not require a cohort.
         ProgramRequestDao request = new ProgramRequestDao();
         request.setProgramName("Java Backend");
         request.setProgramStartDate(LocalDate.now());
