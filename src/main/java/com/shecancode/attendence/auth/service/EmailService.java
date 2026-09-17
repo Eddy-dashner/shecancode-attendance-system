@@ -1,49 +1,59 @@
 package com.shecancode.attendence.auth.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.shecancode.attendence.registration.Exception.EmailDeliveryException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.MailSendException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Sends application emails as HTML rendered from Thymeleaf templates under
- * {@code templates/email/}. All email-building logic lives here so controllers and
- * services never assemble message bodies themselves.
- */
+
 @Slf4j
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private static final URI BREVO_ENDPOINT = URI.create("https://api.brevo.com/v3/smtp/email");
+
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
     private final TemplateEngine templateEngine;
     private final String appName;
     private final String fromAddress;
+    private final String fromName;
+    private final String apiKey;
 
     private static final DateTimeFormatter EXPIRY_FMT =
             DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
     public EmailService(
-            JavaMailSender mailSender,
+            ObjectMapper objectMapper,
             TemplateEngine templateEngine,
             @Value("${app.name}") String appName,
-            @Value("${app.mail.from-address}") String fromAddress
+            @Value("${app.mail.from-address}") String fromAddress,
+            @Value("${app.mail.from-name}") String fromName,
+            @Value("${app.mail.brevo-api-key}") String apiKey
     ) {
-        this.mailSender = mailSender;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        this.objectMapper = objectMapper;
         this.templateEngine = templateEngine;
         this.appName = appName;
         this.fromAddress = fromAddress;
+        this.fromName = fromName;
+        this.apiKey = apiKey;
     }
 
     public void sendStudentInvitation(String toEmail, String programName, String cohortNumber,
@@ -74,21 +84,43 @@ public class EmailService {
     }
 
     private void send(String toEmail, String subject, String htmlBody) {
+        ObjectNode payload = objectMapper.createObjectNode();
+        ObjectNode sender = payload.putObject("sender");
+        sender.put("email", fromAddress);
+        sender.put("name", fromName);
+        payload.putArray("to").addObject().put("email", toEmail);
+        payload.put("subject", subject);
+        payload.put("htmlContent", htmlBody);
+
+        HttpRequest request;
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-            helper.setFrom(fromAddress);
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            log.info("Email '{}' sent to [{}]", subject, toEmail);
-        } catch (MessagingException e) {
-            // Wrap so it is handled uniformly (502) and never leaks SMTP internals.
-            throw new MailSendException("Failed to build/send email to " + toEmail, e);
-        } catch (MailException e) {
-            log.error("SMTP failure sending email to [{}]: {}", toEmail, e.getMessage());
-            throw e;
+            request = HttpRequest.newBuilder(BREVO_ENDPOINT)
+                    .timeout(Duration.ofSeconds(10))
+                    .header("api-key", apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+                    .build();
+        } catch (IOException e) {
+            throw new EmailDeliveryException("Failed to build email payload for " + toEmail, e);
+        }
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                log.info("Email '{}' sent to [{}]", subject, toEmail);
+                return;
+            }
+            log.error("Brevo API rejected email to [{}]: HTTP {} - {}",
+                    toEmail, response.statusCode(), response.body());
+            throw new EmailDeliveryException(
+                    "Brevo API returned HTTP " + response.statusCode() + " for " + toEmail);
+        } catch (IOException e) {
+            log.error("Failed to reach Brevo API sending email to [{}]: {}", toEmail, e.getMessage());
+            throw new EmailDeliveryException("Could not reach Brevo API for " + toEmail, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new EmailDeliveryException("Interrupted while sending email to " + toEmail, e);
         }
     }
 }
