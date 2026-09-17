@@ -85,8 +85,9 @@ services:
       APP_JWT_SECRET: change-this-to-a-long-secure-secret-key-at-least-32-bytes
       APP_JWT_ACCESS_TOKEN_EXPIRATION_MS: 900000
       APP_JWT_REFRESH_TOKEN_EXPIRATION_MS: 604800000
-      MAIL_USERNAME: ${MAIL_USERNAME:-no-reply@igirerwanda.org}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:?set MAIL_PASSWORD in a local .env file (gitignored), not here}
+      BREVO_API_KEY: ${BREVO_API_KEY:?set BREVO_API_KEY in a local .env file (gitignored), not here}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@igirerwanda.org}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-SheCanCODE}
 
       SPRING_KAFKA_BOOTSTRAP_SERVERS: shecancode-kafka:29092
     networks:
