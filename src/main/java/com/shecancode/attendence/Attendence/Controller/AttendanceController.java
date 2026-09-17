@@ -22,6 +22,8 @@ import java.util.UUID;
 @RequestMapping("/api/v1/programs/{programId}/cohorts/{cohortId}/attendance")
 @Validated // Ensures @Valid works on nested objects if needed
 @Tag(name = "Attendance", description = "Bulk attendance recording and updates (ADMIN or TRAINER)")
+
+//this is am attendance cobrtroller
 public class AttendanceController {
     private final AttendanceService attendanceService;
 

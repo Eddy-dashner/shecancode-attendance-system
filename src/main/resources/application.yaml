@@ -21,23 +21,6 @@ spring:
     init:
       mode: always
 
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:no-reply@igirerwanda.org}
-    password: ${MAIL_PASSWORD:}
-
-    properties:
-      mail:
-        smtp:
-          auth: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-          starttls:
-            enable: true
-            required: true
-
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -64,9 +47,12 @@ app:
     # (rotated on every refresh) and revocable server-side (see refresh_token table).
     refresh-token-expiration-ms: ${APP_JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000}
   mail:
-    # Gmail rejects a From that isn't the authenticated account (or a verified
-    # alias), so default the From to MAIL_USERNAME unless MAIL_FROM is set.
-    from-address: ${MAIL_FROM:${MAIL_USERNAME:no-reply@igirerwanda.org}}
+    # Sent via the Brevo transactional email HTTP API (not SMTP) since Railway's
+    # free/trial plans block outbound SMTP ports. from-address must be a sender
+    # verified in Brevo (Senders & IP > Senders).
+    from-address: ${MAIL_FROM:no-reply@igirerwanda.org}
+    from-name: ${MAIL_FROM_NAME:SheCanCODE}
+    brevo-api-key: ${BREVO_API_KEY:}
   activation:
     token-expiry-hours: ${ACTIVATION_TOKEN_EXPIRY_HOURS:48}
     # Minimum seconds between successive resend requests for the same account

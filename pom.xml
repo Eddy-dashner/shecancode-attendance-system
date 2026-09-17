@@ -88,13 +88,8 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
-		<!-- Email (account activation links) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
-
-		<!-- Thymeleaf: HTML email templates -->
+		<!-- Thymeleaf: HTML email templates (sent via Brevo's HTTP API using
+		     spring-boot-starter-web's HttpClient/Jackson, not SMTP) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
