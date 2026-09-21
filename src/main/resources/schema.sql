@@ -25,14 +25,15 @@ CREATE TABLE program (
 -- ==========================================
 CREATE TABLE cohort (
                         cohort_id UUID PRIMARY KEY,
-                        cohort_number VARCHAR(255) NOT NULL UNIQUE,
+                        cohort_number VARCHAR(255) NOT NULL,
                         start_date DATE NOT NULL,
                         end_date DATE NOT NULL,
                         program_id UUID NOT NULL,
 
                         CONSTRAINT fk_cohort_program
                             FOREIGN KEY (program_id)
-                                REFERENCES program (program_id)
+                                REFERENCES program (program_id),
+                        CONSTRAINT uk_cohort_program_number UNIQUE (program_id, cohort_number)
 );
 
 -- ==========================================

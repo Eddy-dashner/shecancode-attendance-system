@@ -39,7 +39,7 @@ public class AuthController {
                     "POST /api/v1/students) and are rejected here. Requires an ADMIN bearer token.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created; JWT returned"),
-            @ApiResponse(responseCode = "400", description = "Validation failed, non-ADMIN role rejected, or username taken", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Validation failed, non-ADMIN role rejected, or email already registered", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
             @ApiResponse(responseCode = "403", description = "Authenticated caller is not an ADMIN", content = @Content)
     })
@@ -79,12 +79,12 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(tags = {"Authentication"}, summary = "Login and receive a JWT token",
-            description = "Public endpoint. Exchanges username/password for a Bearer JWT.")
+            description = "Public endpoint. Exchanges email/password for a Bearer JWT.")
     @SecurityRequirements // public: no bearer lock in Swagger UI
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authenticated; JWT returned"),
-            @ApiResponse(responseCode = "400", description = "Missing username or password", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Invalid username or password (generic message)", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Missing or invalid email, or missing password", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Invalid email or password (generic message)", content = @Content),
             @ApiResponse(responseCode = "403", description = "Account is disabled (not yet activated)", content = @Content)
     })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {

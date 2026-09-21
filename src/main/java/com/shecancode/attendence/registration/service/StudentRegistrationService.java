@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.service;
 
+import com.shecancode.attendence.auth.util.EmailUtils;
 import com.shecancode.attendence.auth.model.AccountStatus;
 import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.auth.model.Role;
@@ -49,7 +50,7 @@ public class StudentRegistrationService {
      */
     @Transactional
     public StudentResponseDao createStudentAccount(AdminCreateStudentRequest request) {
-        String email = request.getEmail();
+        String email = EmailUtils.normalize(request.getEmail());
 
         // Defence-in-depth alongside @Email on the DTO.
         if (!isValidEmail(email)) {

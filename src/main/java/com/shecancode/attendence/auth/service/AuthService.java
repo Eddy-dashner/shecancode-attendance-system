@@ -9,6 +9,7 @@ import com.shecancode.attendence.auth.model.RefreshToken;
 import com.shecancode.attendence.auth.model.Role;
 import com.shecancode.attendence.auth.repository.UserRepository;
 import com.shecancode.attendence.auth.security.JwtService;
+import com.shecancode.attendence.auth.util.EmailUtils;
 import com.shecancode.attendence.registration.Exception.InvalidRefreshTokenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,13 +41,14 @@ public class AuthService {
                     "Only ADMIN accounts can be created here. Invite trainers and students via their invitation endpoints.");
         }
 
-        if (userRepository.existsByUsername(request.getUsername())) {
+        String email = EmailUtils.normalize(request.getEmail());
+        if (userRepository.existsByUsername(email)) {
             throw new IllegalArgumentException(
-                    "Username '" + request.getUsername() + "' is already taken.");
+                    "An account with email '" + email + "' already exists.");
         }
 
         AppUser user = AppUser.builder()
-                .username(request.getUsername())
+                .username(email)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .role(request.getRole())
@@ -61,14 +63,15 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = EmailUtils.normalize(request.getEmail());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        email,
                         request.getPassword()
                 )
         );
 
-        AppUser user = userRepository.findByUsername(request.getUsername())
+        AppUser user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         log.info("User [{}] logged in successfully", user.getUsername());
