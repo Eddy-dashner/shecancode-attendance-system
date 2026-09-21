@@ -57,7 +57,7 @@ class CohortServiceTest {
     void givenNewCohortNumber_whenCreateCohort_thenCohortIsSaved(){
 
         when(programRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(cohortRepository.findByCohortNumber(cohortRequestToTest.getCohortNumber())).thenReturn(Optional.empty());
+        when(cohortRepository.existsByProgram_IdAndCohortNumber(programId, "C10")).thenReturn(false);
         when(cohortRepository.save(any(Cohort.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         CohortResponseDao savedCohort = cohortService.createCohort(cohortRequestToTest);
@@ -65,14 +65,14 @@ class CohortServiceTest {
         assertNotNull(savedCohort);
         assertEquals("C10", savedCohort.getCohortNumber());
         assertEquals("Backend", savedCohort.getProgramName());
-        verify(cohortRepository).findByCohortNumber("C10");
+        verify(cohortRepository).existsByProgram_IdAndCohortNumber(programId, "C10");
         verify(cohortRepository, times(1)).save(any(Cohort.class));
     }
 
     @Test
     void test_createCohort_AlreadyExists_ThrowsException(){
         when(programRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(cohortRepository.findByCohortNumber(cohortRequestToTest.getCohortNumber())).thenReturn(Optional.of(new Cohort()));
+        when(cohortRepository.existsByProgram_IdAndCohortNumber(programId, "C10")).thenReturn(true);
 
         assertThrows(CohortAlreadyExistException.class, () -> cohortService.createCohort(cohortRequestToTest));
     }

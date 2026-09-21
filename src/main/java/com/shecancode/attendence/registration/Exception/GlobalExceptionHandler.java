@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
-                "Invalid username or password.",
+                "Invalid email or password.",
                 StringEscapeUtils.escapeHtml4(request.getRequestURI()));
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }

@@ -1,5 +1,6 @@
 package com.shecancode.attendence.auth.service;
 
+import com.shecancode.attendence.auth.util.EmailUtils;
 import com.shecancode.attendence.auth.dto.ActivateAccountRequest;
 import com.shecancode.attendence.auth.dto.AuthResponse;
 import com.shecancode.attendence.auth.model.AccountStatus;
@@ -134,7 +135,7 @@ public class ActivationService {
 
     @Transactional
     public void resendActivation(String email) {
-        AppUser user = userRepository.findByUsername(email)
+        AppUser user = userRepository.findByUsername(EmailUtils.normalize(email))
                 .orElseThrow(() -> new ActivationTokenException("No pending invitation found for this email."));
 
         if (user.isEnabled()) {
