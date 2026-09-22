@@ -1,5 +1,6 @@
 package com.shecancode.attendence.auth.service;
 
+import com.shecancode.attendence.auth.util.EmailUtils;
 import com.shecancode.attendence.auth.dto.InvitedAccountResponse;
 import com.shecancode.attendence.auth.dto.TrainerInviteRequest;
 import com.shecancode.attendence.auth.model.AccountStatus;
@@ -26,7 +27,7 @@ public class TrainerService {
 
     @Transactional
     public InvitedAccountResponse inviteTrainer(TrainerInviteRequest request) {
-        String email = request.getEmail();
+        String email = EmailUtils.normalize(request.getEmail());
 
         if (userRepository.existsByUsername(email)) {
             throw new EmailAlreadyExistException("A user with this email already exists.");

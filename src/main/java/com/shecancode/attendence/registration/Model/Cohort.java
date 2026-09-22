@@ -13,14 +13,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cohort")
+@Table(name = "cohort", uniqueConstraints = @UniqueConstraint(
+        name = "uk_cohort_program_number", columnNames = {"program_id", "cohort_number"}))
 public class Cohort {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "cohort_id")
     private UUID id;
 
-    @Column(name = "cohort_number", unique = true, nullable = false)
+    // Unique per program, not globally: "Cohort 1" may exist in every program.
+    @Column(name = "cohort_number", nullable = false)
     private String cohortNumber;
 
     @Column(name = "start_date", nullable = false)
