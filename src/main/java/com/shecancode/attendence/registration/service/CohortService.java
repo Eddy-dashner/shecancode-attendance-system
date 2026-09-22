@@ -48,8 +48,8 @@ public class CohortService {
                 .orElseThrow(() -> new ProgramNotFoundException(
                         "Program [" + LoggingUtils.sanitizeForLogging(String.valueOf(cohortRequestDao.getProgramId())) + "] not found."));
 
-        if (cohortRepository.findByCohortNumber(cohortRequestDao.getCohortNumber()).isPresent()) {
-            throw new CohortAlreadyExistException("Cohort with this number exists: " + LoggingUtils.sanitizeForLogging(cohortRequestDao.getCohortNumber()));
+        if (cohortRepository.existsByProgram_IdAndCohortNumber(cohortRequestDao.getProgramId(), cohortRequestDao.getCohortNumber())) {
+            throw new CohortAlreadyExistException("Cohort " + LoggingUtils.sanitizeForLogging(cohortRequestDao.getCohortNumber()) + " already exists in program " + LoggingUtils.sanitizeForLogging(program.getProgramName()));
         }
 
         if (cohortRequestDao.getStartDate() != null && cohortRequestDao.getEndDate() != null && cohortRequestDao.getEndDate().isBefore(cohortRequestDao.getStartDate())) {
