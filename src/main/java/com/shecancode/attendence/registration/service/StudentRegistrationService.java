@@ -11,6 +11,7 @@ import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Exception.CohortProgramMismatchException;
 import com.shecancode.attendence.registration.Exception.EmailAlreadyExistException;
 import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
+import com.shecancode.attendence.registration.Exception.ReadOnlyException;
 import com.shecancode.attendence.registration.Exception.StudentNotFoundException;
 import com.shecancode.attendence.registration.Mapper.StudentMapper;
 import com.shecancode.attendence.registration.Model.Cohort;
@@ -28,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -63,17 +63,22 @@ public class StudentRegistrationService {
             throw new EmailAlreadyExistException("A student with this email already exists.");
         }
 
-        Program program = programsRepository.findById(request.getProgramId())
+        Program program = programsRepository.findByIdAndDeletedAtIsNull(request.getProgramId())
                 .orElseThrow(() -> new ProgramNotFoundException(
                         "Enrolment failed: Program [" + LoggingUtils.sanitizeForLogging(String.valueOf(request.getProgramId())) + "] not found."));
 
-        Cohort cohort = cohortRepository.findById(request.getCohortId())
+        Cohort cohort = cohortRepository.findByIdAndDeletedAtIsNull(request.getCohortId())
                 .orElseThrow(() -> new CohortNotFoundException(
                         "Enrolment failed: Cohort [" + LoggingUtils.sanitizeForLogging(String.valueOf(request.getCohortId())) + "] not found."));
 
         if (cohort.getProgram() == null || !cohort.getProgram().getId().equals(program.getId())) {
             throw new CohortProgramMismatchException(
                     "The selected cohort does not belong to the selected program.");
+        }
+
+        if (cohort.isReadOnly()) {
+            throw new ReadOnlyException("Cohort " + LoggingUtils.sanitizeForLogging(cohort.getCohortNumber())
+                    + " is closed; reopen it to add students.");
         }
 
         AppUser user = AppUser.builder()
@@ -145,12 +150,5 @@ public class StudentRegistrationService {
         if (email == null || email.isBlank()) return false;
         return email.contains("@") && email.contains(".") &&
                 email.indexOf("@") < email.lastIndexOf(".");
-    }
-
-
-    public List<StudentResponseDao> getAllStudents() {
-        return studentRepository.findAll().stream()
-                .map(StudentMapper::toDTO)
-                .toList();
     }
 }

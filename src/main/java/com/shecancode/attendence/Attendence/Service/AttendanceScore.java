@@ -48,6 +48,11 @@ public record AttendanceScore(
         return new AttendanceScore(statusesNewestFirst.size(), absent, communicated, late, streak);
     }
 
+    /** On-time attendance (not late, not absent). */
+    public int present() {
+        return sessionsRecorded - absent - absentCommunicated - late;
+    }
+
     public int totalAbsences() {
         return absent + absentCommunicated;
     }

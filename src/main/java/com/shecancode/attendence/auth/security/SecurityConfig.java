@@ -183,6 +183,8 @@ private final JwtAuthenticationFilter jwtAuthFilter;
                         .requestMatchers(HttpMethod.GET, "/api/v1/programs/*/cohorts/*/attendance/**")
                         .hasAnyRole("ADMIN", "TRAINER")
                         .requestMatchers("/api/v1/attendance/**").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/programs/*/attendance", "/api/v1/programs/*/participants")
+                        .hasAnyRole("ADMIN", "TRAINER")
 
                         .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
 

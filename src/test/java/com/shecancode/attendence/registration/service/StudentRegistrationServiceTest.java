@@ -74,8 +74,8 @@ class StudentRegistrationServiceTest {
     void createStudentAccount_success_invitesAndReturnsPendingStudent() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(cohort));
+        when(programsRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findByIdAndDeletedAtIsNull(cohortId)).thenReturn(Optional.of(cohort));
         when(studentRepository.save(any(Student.class))).thenAnswer(i -> i.getArguments()[0]);
 
         StudentResponseDao response = registrationService.createStudentAccount(validRequest);
@@ -114,7 +114,7 @@ class StudentRegistrationServiceTest {
     void createStudentAccount_programNotFound_throws() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(programsRepository.findById(programId)).thenReturn(Optional.empty());
+        when(programsRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.empty());
         assertThrows(ProgramNotFoundException.class,
                 () -> registrationService.createStudentAccount(validRequest));
     }
@@ -123,8 +123,8 @@ class StudentRegistrationServiceTest {
     void createStudentAccount_cohortNotFound_throws() {
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(cohortRepository.findById(cohortId)).thenReturn(Optional.empty());
+        when(programsRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findByIdAndDeletedAtIsNull(cohortId)).thenReturn(Optional.empty());
         assertThrows(CohortNotFoundException.class,
                 () -> registrationService.createStudentAccount(validRequest));
     }
@@ -137,8 +137,8 @@ class StudentRegistrationServiceTest {
 
         when(studentRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(programsRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(cohortRepository.findById(cohortId)).thenReturn(Optional.of(mismatchedCohort));
+        when(programsRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.findByIdAndDeletedAtIsNull(cohortId)).thenReturn(Optional.of(mismatchedCohort));
 
         assertThrows(CohortProgramMismatchException.class,
                 () -> registrationService.createStudentAccount(validRequest));

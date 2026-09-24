@@ -1,7 +1,6 @@
 package com.shecancode.attendence.Attendence.dao;
 
 import com.shecancode.attendence.Attendence.Enum.AlertType;
-import com.shecancode.attendence.Attendence.Enum.ProgressColor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,14 +19,11 @@ public class CohortAttendanceSummaryResponse {
     private String cohortNumber;
     private List<StudentSummary> students;
 
-    /** Progress fields are null for a student with no attendance recorded yet. */
+    /** attendance counts only this cohort's sessions; all zero before the first session. */
     public record StudentSummary(
             UUID studentId,
             String studentName,
-            Double attendancePoints,
-            Double attendancePercentage,
-            ProgressColor color,
-            Integer consecutiveAbsences,
+            AttendanceSummaryDto attendance,
             List<AlertType> activeAlerts
     ) {}
 }
