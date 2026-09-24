@@ -14,8 +14,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class AttendanceResponse {
-    
+
     private UUID attendanceId;
+    private UUID sessionId;
 
     private UUID studentId;
     private String studentName;
@@ -30,12 +31,11 @@ public class AttendanceResponse {
 
     private LocalTime checkInTime;
 
-    private Integer daysRemainingUntilGraduation;
-
     private String remarks;
     private LocalDate attendanceRecordedDate;
+
     private LocalDate graduationDate;
-    private String participationStatus;
+    private Integer daysRemainingUntilGraduation;
 
     private UUID recordedById;
     private String recordedByName;

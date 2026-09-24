@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
         @Tag(name = "Administration", description = "Admin setup for Cohorts and Programs"),
         @Tag(name = "Trainers", description = "Trainer invitation (ADMIN only)"),
         @Tag(name = "Students", description = "Student enrolment, activation profile and lookup"),
-        @Tag(name = "Attendance", description = "Bulk attendance recording and updates (ADMIN or TRAINER)")
+        @Tag(name = "Attendance", description = "Cohort registers, summaries, student history and absence alerts")
     }
 )
 @SecurityScheme(
