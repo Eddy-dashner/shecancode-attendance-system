@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 @Slf4j
@@ -81,6 +82,33 @@ public class EmailService {
 
         String html = templateEngine.process("email/trainer-invitation", ctx);
         send(toEmail, "Activate your " + appName + " trainer account", html);
+    }
+
+    public void sendAbsenceAlertToStudent(String toEmail, String studentName, String programName,
+                                          String cohortNumber, List<String> reasons) {
+        Context ctx = new Context();
+        ctx.setVariable("appName", appName);
+        ctx.setVariable("studentName", studentName);
+        ctx.setVariable("programName", programName);
+        ctx.setVariable("cohortNumber", cohortNumber);
+        ctx.setVariable("reasons", reasons);
+
+        String html = templateEngine.process("email/attendance-alert-student", ctx);
+        send(toEmail, "Your attendance in " + programName + " needs attention", html);
+    }
+
+    public void sendAbsenceAlertToTrainer(String toEmail, String trainerName, String studentName,
+                                          String programName, String cohortNumber, List<String> reasons) {
+        Context ctx = new Context();
+        ctx.setVariable("appName", appName);
+        ctx.setVariable("trainerName", trainerName);
+        ctx.setVariable("studentName", studentName);
+        ctx.setVariable("programName", programName);
+        ctx.setVariable("cohortNumber", cohortNumber);
+        ctx.setVariable("reasons", reasons);
+
+        String html = templateEngine.process("email/attendance-alert-trainer", ctx);
+        send(toEmail, "Attendance alert: " + studentName + " (" + cohortNumber + ")", html);
     }
 
     private void send(String toEmail, String subject, String htmlBody) {

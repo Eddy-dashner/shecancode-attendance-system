@@ -3,37 +3,34 @@ package com.shecancode.attendence.Attendence.dao;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shecancode.attendence.Attendence.Enum.AttendanceStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
-import java.util.UUID;
 
-
+/**
+ * One student's attendance, when the student is identified by the URL.
+ * For recording, attendanceStatus is required; for an update, null fields keep their current value.
+ */
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Setter
-@Getter
 @Builder
-@Schema(description = "Per-student attendance entry")
-public class StudentAttendanceRequestDto {
+@Schema(description = "One student's attendance entry")
+public class AttendanceEntryRequest {
 
-    @NotNull
-    @Schema(example = "550e8400-e29b-41d4-a716-446655440011")
-    private UUID studentId;
-
-    @NotNull
-    @Schema(example = "PRESENT", allowableValues = {"PRESENT", "ABSENT", "ABSENT_COMMUNICATED", "LATE_PRESENT"})
+    @Schema(example = "LATE_PRESENT", allowableValues = {"PRESENT", "ABSENT", "ABSENT_COMMUNICATED", "LATE_PRESENT"})
     private AttendanceStatus attendanceStatus;
 
     @JsonFormat(pattern = "HH:mm:ss")
-    @Schema(example = "09:00:00", type = "string",
+    @Schema(example = "09:20:00", type = "string",
             description = "Required for PRESENT and LATE_PRESENT; ignored for absences")
     private LocalTime checkInTime;
 
     @Size(max = 255)
-    @Schema(example = "On time")
+    @Schema(example = "Traffic")
     private String remarks;
-
 }

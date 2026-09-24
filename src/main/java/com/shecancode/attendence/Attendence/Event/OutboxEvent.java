@@ -27,10 +27,6 @@ public class OutboxEvent {
     @Column(nullable = false)
     private EventType eventType;
 
-    // Optional if you later support multiple aggregates
-    // @Enumerated(EnumType.STRING)
-    // @Column(nullable = false)
-    // private AggregateType aggregateType;
 
     @Column(nullable = false)
     private UUID aggregateId;
