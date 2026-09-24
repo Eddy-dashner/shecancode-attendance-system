@@ -2,6 +2,8 @@ package com.shecancode.attendence.registration.dao;
 
 import lombok.*;
 
+import com.shecancode.attendence.registration.Enum.LifecycleStatus;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -21,4 +23,12 @@ public class ProgramResponseDao {
     private LocalDate programStartDate;
 
     private LocalDate programEndDate;
+
+    private LifecycleStatus status;
+
+    // Only filled when fetching a single program.
+    private Long cohortCount;
+
+    // ACTIVE students; only filled when fetching a single program.
+    private Long participantCount;
 }

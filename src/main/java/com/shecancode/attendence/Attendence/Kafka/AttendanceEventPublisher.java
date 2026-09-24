@@ -2,6 +2,7 @@ package com.shecancode.attendence.Attendence.Kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shecancode.attendence.Attendence.Event.AttendanceAlertEvent;
 import com.shecancode.attendence.Attendence.Event.AttendanceEvent;
 import com.shecancode.attendence.Attendence.Event.OutboxEvent;
 import com.shecancode.attendence.Attendence.Event.OutboxRepository;
@@ -40,9 +41,7 @@ public class AttendanceEventPublisher {
         for (OutboxEvent outbox : eventList) {
 
             try {
-                AttendanceEvent event = objectMapper.readValue(
-                        outbox.getPayload(), AttendanceEvent.class);
-                producer.sendAttendanceEvent(event).get();
+                publish(outbox);
                 outbox.setStatus(OutboxStatus.SENT);
                 outbox.setProcessedAt(Instant.now());
 
@@ -55,6 +54,15 @@ public class AttendanceEventPublisher {
                 log.error("Failed to publish event for outbox id: {}", outbox.getId(), e);
                 failOutboxEvent(outbox);
             }
+        }
+    }
+
+    private void publish(OutboxEvent outbox) throws Exception {
+        switch (outbox.getEventType()) {
+            case ATTENDANCE_RECORDED, ATTENDANCE_UPDATED -> producer.sendAttendanceEvent(
+                    objectMapper.readValue(outbox.getPayload(), AttendanceEvent.class)).get();
+            case ATTENDANCE_ALERT_TRIGGERED -> producer.sendAlertEvent(
+                    objectMapper.readValue(outbox.getPayload(), AttendanceAlertEvent.class)).get();
         }
     }
 

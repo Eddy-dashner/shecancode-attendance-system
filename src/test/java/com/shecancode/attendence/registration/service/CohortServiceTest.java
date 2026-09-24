@@ -56,7 +56,7 @@ class CohortServiceTest {
     @Test
     void givenNewCohortNumber_whenCreateCohort_thenCohortIsSaved(){
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
         when(cohortRepository.existsByProgram_IdAndCohortNumber(programId, "C10")).thenReturn(false);
         when(cohortRepository.save(any(Cohort.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -71,7 +71,7 @@ class CohortServiceTest {
 
     @Test
     void test_createCohort_AlreadyExists_ThrowsException(){
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
         when(cohortRepository.existsByProgram_IdAndCohortNumber(programId, "C10")).thenReturn(true);
 
         assertThrows(CohortAlreadyExistException.class, () -> cohortService.createCohort(cohortRequestToTest));
@@ -79,7 +79,7 @@ class CohortServiceTest {
 
     @Test
     void test_createCohort_InvalidProgram_ThrowsNotFound(){
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
+        when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.empty());
 
         assertThrows(ProgramNotFoundException.class, () -> cohortService.createCohort(cohortRequestToTest));
         verify(cohortRepository, never()).save(any(Cohort.class));
