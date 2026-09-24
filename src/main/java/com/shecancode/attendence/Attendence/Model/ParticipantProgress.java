@@ -47,18 +47,4 @@ public class ParticipantProgress {
     @Column(name = "last_updated", nullable = false)
     private LocalDate lastUpdated;
 
-    public void updateHealth(double pointsLost, int totalDuration) {
-        this.attendancePoints = totalDuration - pointsLost;
-        this.attendancePercentage = (this.attendancePoints / totalDuration) * 100;
-
-        if (this.attendancePercentage >= 85) {
-            this.color = ProgressColor.GREEN;
-        } else if (this.attendancePercentage > 60) {
-            this.color = ProgressColor.YELLOW;
-        } else {
-            this.color = ProgressColor.RED;
-        }
-        this.lastUpdated = LocalDate.now();
-    }
-
 }
