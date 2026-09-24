@@ -1,11 +1,13 @@
 package com.shecancode.attendence.Attendence.Kafka;
 
+import com.shecancode.attendence.Attendence.Event.AttendanceAlertEvent;
 import com.shecancode.attendence.Attendence.Event.AttendanceEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.stereotype.Service;
+
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -13,26 +15,28 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class AttendanceProducer {
 
-    private final KafkaTemplate<String, AttendanceEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public CompletableFuture<SendResult<String, AttendanceEvent>>
-    sendAttendanceEvent(AttendanceEvent event) {
+    public CompletableFuture<SendResult<String, Object>> sendAttendanceEvent(AttendanceEvent event) {
+        return send(KafkaTopicConfig.ATTENDANCE_TOPIC, event.getStudentId().toString(), event);
+    }
 
-        String messageKey = event.getStudentId().toString();
+    public CompletableFuture<SendResult<String, Object>> sendAlertEvent(AttendanceAlertEvent event) {
+        return send(KafkaTopicConfig.ALERT_TOPIC, event.getStudentId().toString(), event);
+    }
 
-        return kafkaTemplate.send(
-                KafkaTopicConfig.ATTENDANCE_TOPIC,
-                messageKey,
-                event
-        ).whenComplete((result, ex) -> {
-            if (ex == null) {
-                log.info("Successfully produced event to topic [{}], Partition: {}, Offset: {}",
-                        result.getRecordMetadata().topic(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-            } else {
-                log.error("Failed to deliver message to topic [{}]", KafkaTopicConfig.ATTENDANCE_TOPIC, ex);
-            }
-        });
+    // Keyed by student id so all events for one student land on the same partition, in order.
+    private CompletableFuture<SendResult<String, Object>> send(String topic, String key, Object event) {
+        return kafkaTemplate.send(topic, key, event)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.info("Successfully produced event to topic [{}], Partition: {}, Offset: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                    } else {
+                        log.error("Failed to deliver message to topic [{}]", topic, ex);
+                    }
+                });
     }
 }

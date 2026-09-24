@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shecancode.attendence.Attendence.Enum.AttendanceStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalTime;
@@ -27,9 +28,11 @@ public class StudentAttendanceRequestDto {
     private AttendanceStatus attendanceStatus;
 
     @JsonFormat(pattern = "HH:mm:ss")
-    @Schema(example = "09:00:00", type = "string")
+    @Schema(example = "09:00:00", type = "string",
+            description = "Required for PRESENT and LATE_PRESENT; ignored for absences")
     private LocalTime checkInTime;
 
+    @Size(max = 255)
     @Schema(example = "On time")
     private String remarks;
 

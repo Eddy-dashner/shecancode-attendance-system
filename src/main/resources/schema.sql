@@ -2,7 +2,9 @@
 -- 1. DROP TABLES (children first)
 -- ==========================================
 DROP TABLE IF EXISTS activation_token CASCADE;
+DROP TABLE IF EXISTS attendance_alert CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
+DROP TABLE IF EXISTS attendance_session CASCADE;
 DROP TABLE IF EXISTS participant CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS cohort CASCADE;
@@ -64,25 +66,55 @@ CREATE TABLE student (
 );
 
 -- ==========================================
--- 5. ATTENDANCE (FIXED)
+-- 5. ATTENDANCE SESSION (one register per cohort per date)
+-- ==========================================
+CREATE TABLE attendance_session (
+                            session_id UUID PRIMARY KEY,
+                            cohort_id UUID NOT NULL,
+                            program_id UUID NOT NULL,
+                            session_date DATE NOT NULL,
+                            taken_by_id UUID NOT NULL,
+                            taken_by_name VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP NOT NULL,
+                            updated_at TIMESTAMP,
+
+                            CONSTRAINT fk_session_cohort
+                                FOREIGN KEY (cohort_id)
+                                    REFERENCES cohort (cohort_id),
+
+                            CONSTRAINT fk_session_program
+                                FOREIGN KEY (program_id)
+                                    REFERENCES program (program_id),
+
+                            CONSTRAINT uk_session_cohort_date UNIQUE (cohort_id, session_date)
+);
+
+-- ==========================================
+-- 5b. ATTENDANCE (one row per student per session)
 -- ==========================================
 CREATE TABLE attendance (
                             attendance_id UUID PRIMARY KEY,
+                            session_id UUID NOT NULL,
                             student_id UUID NOT NULL,
                             program_id UUID NOT NULL,
                             cohort_id UUID NOT NULL,
 
-                            check_in_time TIMESTAMP,
-                            attendance_status VARCHAR(255),
+                            -- NULL for absences
+                            check_in_time TIME,
+                            attendance_status VARCHAR(255) NOT NULL,
                             remarks VARCHAR(255),
 
                             attendance_recorded_date DATE NOT NULL,
 
-                            created_at TIMESTAMP,
+                            created_at TIMESTAMP NOT NULL,
                             updated_at TIMESTAMP,
 
-                            recorded_by_id UUID,
-                            recorded_by_name VARCHAR(255),
+                            recorded_by_id UUID NOT NULL,
+                            recorded_by_name VARCHAR(255) NOT NULL,
+
+                            CONSTRAINT fk_attendance_session
+                                FOREIGN KEY (session_id)
+                                    REFERENCES attendance_session (session_id),
 
                             CONSTRAINT fk_attendance_student
                                 FOREIGN KEY (student_id)
@@ -94,8 +126,47 @@ CREATE TABLE attendance (
 
                             CONSTRAINT fk_attendance_cohort
                                 FOREIGN KEY (cohort_id)
+                                    REFERENCES cohort (cohort_id),
+
+                            CONSTRAINT uk_attendance_session_student UNIQUE (session_id, student_id)
+);
+
+CREATE INDEX idx_attendance_date_cohort ON attendance (attendance_recorded_date, cohort_id);
+CREATE INDEX idx_attendance_student_program ON attendance (student_id, program_id);
+
+-- ==========================================
+-- 5c. ATTENDANCE ALERT (3 absences in a row / in total)
+-- ==========================================
+CREATE TABLE attendance_alert (
+                            alert_id UUID PRIMARY KEY,
+                            student_id UUID NOT NULL,
+                            program_id UUID NOT NULL,
+                            cohort_id UUID NOT NULL,
+                            alert_type VARCHAR(50) NOT NULL,
+                            status VARCHAR(50) NOT NULL,
+                            absence_count INTEGER NOT NULL,
+                            triggered_on_date DATE NOT NULL,
+                            triggered_by_id UUID NOT NULL,
+                            triggered_by_name VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                            resolved_at TIMESTAMP WITH TIME ZONE,
+                            student_notified_at TIMESTAMP WITH TIME ZONE,
+                            trainer_notified_at TIMESTAMP WITH TIME ZONE,
+
+                            CONSTRAINT fk_alert_student
+                                FOREIGN KEY (student_id)
+                                    REFERENCES student (student_id),
+
+                            CONSTRAINT fk_alert_program
+                                FOREIGN KEY (program_id)
+                                    REFERENCES program (program_id),
+
+                            CONSTRAINT fk_alert_cohort
+                                FOREIGN KEY (cohort_id)
                                     REFERENCES cohort (cohort_id)
 );
+
+CREATE INDEX idx_alert_student_program_status ON attendance_alert (student_id, program_id, status);
 
 -- ==========================================
 -- 6. PARTICIPANT

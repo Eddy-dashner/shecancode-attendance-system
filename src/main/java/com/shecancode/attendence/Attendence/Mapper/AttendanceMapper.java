@@ -1,57 +1,65 @@
 package com.shecancode.attendence.Attendence.Mapper;
 
 import com.shecancode.attendence.Attendence.Model.Attendance;
-import com.shecancode.attendence.Attendence.dao.StudentAttendanceRequestDto;
+import com.shecancode.attendence.Attendence.Model.AttendanceAlert;
+import com.shecancode.attendence.Attendence.Model.AttendanceSession;
+import com.shecancode.attendence.Attendence.dao.AttendanceAlertResponse;
 import com.shecancode.attendence.Attendence.dao.AttendanceResponse;
+import com.shecancode.attendence.Attendence.dao.StudentAttendanceRequestDto;
+import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.registration.Model.Cohort;
-import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.time.temporal.ChronoUnit;
 
 public class AttendanceMapper {
+
     public static Attendance toAttendance(StudentAttendanceRequestDto studentDto,
                                           Student student,
-                                          Program program,
-                                          Cohort cohort,
-                                          UUID recordedById,
-                                          String recordedByName,
-                                          LocalDate attendanceDate) {
-
-        return Attendance.builder()
-                // ID is omitted; Hibernate generates it automatically
+                                          AttendanceSession session,
+                                          AppUser recorder) {
+        Attendance attendance = Attendance.builder()
+                .session(session)
                 .student(student)
-                .program(program)
-                .cohort(cohort)
-                // Since DTO and Entity both use the Enum, no need for valueOf()
-                .attendanceStatus(studentDto.getAttendanceStatus())
-                .attendanceRecordedDate(attendanceDate)
-                .checkInTime(studentDto.getCheckInTime())
-                .remarks(studentDto.getRemarks())
-                .recordedById(recordedById)
-                .recordedByName(recordedByName)
+                .program(session.getProgram())
+                .cohort(session.getCohort())
+                .attendanceRecordedDate(session.getSessionDate())
                 .build();
+        applyEntry(attendance, studentDto, recorder);
+        return attendance;
     }
 
-    public static AttendanceResponse toResponseDTO(Attendance attendance, Integer daysRemaining) {
-        if (attendance == null) return null;
+    /** Copies the editable fields of an entry onto a (new or existing) attendance row. */
+    public static void applyEntry(Attendance attendance, StudentAttendanceRequestDto dto, AppUser recorder) {
+        attendance.setAttendanceStatus(dto.getAttendanceStatus());
+        // Absent students have no check-in time.
+        attendance.setCheckInTime(dto.getAttendanceStatus().requiresCheckInTime() ? dto.getCheckInTime() : null);
+        attendance.setRemarks(dto.getRemarks());
+        attendance.setRecordedById(recorder.getId());
+        attendance.setRecordedByName(displayName(recorder));
+    }
+
+    public static AttendanceResponse toResponseDTO(Attendance attendance, LocalDate today) {
+        Cohort cohort = attendance.getCohort();
+        LocalDate graduationDate = cohort.getEndDate();
 
         return AttendanceResponse.builder()
                 .attendanceId(attendance.getAttendanceId())
+                .sessionId(attendance.getSession().getId())
                 .studentId(attendance.getStudent().getId())
-                .studentName(formatFullName(attendance.getStudent()))
-                .cohortId(attendance.getCohort() != null ? attendance.getCohort().getId() : null)
-                .cohortNumber(attendance.getCohort() != null ? attendance.getCohort().getCohortNumber() : "N/A")
+                .studentName(studentName(attendance.getStudent()))
+                .cohortId(cohort.getId())
+                .cohortNumber(cohort.getCohortNumber())
                 .programId(attendance.getProgram().getId())
                 .programName(attendance.getProgram().getProgramName())
                 .attendanceStatus(attendance.getAttendanceStatus().name())
                 .checkInTime(attendance.getCheckInTime())
                 .remarks(attendance.getRemarks())
-                .daysRemainingUntilGraduation(daysRemaining)
                 .attendanceRecordedDate(attendance.getAttendanceRecordedDate())
+                .graduationDate(graduationDate)
+                .daysRemainingUntilGraduation(
+                        (int) Math.max(0, ChronoUnit.DAYS.between(today, graduationDate)))
                 .recordedById(attendance.getRecordedById())
                 .recordedByName(attendance.getRecordedByName())
                 .createdAt(attendance.getCreatedAt())
@@ -59,16 +67,38 @@ public class AttendanceMapper {
                 .build();
     }
 
-    public static List<AttendanceResponse> toResponseDTOList(List<Attendance> attendances, Integer daysRemaining) {
-        if (attendances == null) return Collections.emptyList();
-
-        return attendances.stream()
-                .map(attendance -> toResponseDTO(attendance, daysRemaining))
-                .toList();
+    public static AttendanceAlertResponse toAlertResponse(AttendanceAlert alert) {
+        return AttendanceAlertResponse.builder()
+                .alertId(alert.getId())
+                .alertType(alert.getAlertType())
+                .status(alert.getStatus())
+                .absenceCount(alert.getAbsenceCount())
+                .studentId(alert.getStudent().getId())
+                .studentName(studentName(alert.getStudent()))
+                .cohortId(alert.getCohort().getId())
+                .cohortNumber(alert.getCohort().getCohortNumber())
+                .programId(alert.getProgram().getId())
+                .programName(alert.getProgram().getProgramName())
+                .triggeredOnDate(alert.getTriggeredOnDate())
+                .triggeredByName(alert.getTriggeredByName())
+                .createdAt(alert.getCreatedAt())
+                .resolvedAt(alert.getResolvedAt())
+                .studentNotifiedAt(alert.getStudentNotifiedAt())
+                .trainerNotifiedAt(alert.getTrainerNotifiedAt())
+                .build();
     }
 
-    private static String formatFullName(Student student) {
-        return String.format("%s %s", student.getStudentFirstName(), student.getStudentLastName()).trim();
+    /** Invited students have no name until they complete their profile; fall back to email. */
+    public static String studentName(Student student) {
+        String first = student.getStudentFirstName();
+        String last = student.getStudentLastName();
+        if (first == null && last == null) return student.getEmail();
+        return ((first == null ? "" : first) + " " + (last == null ? "" : last)).trim();
+    }
+
+    public static String displayName(AppUser user) {
+        return user.getFullName() != null && !user.getFullName().isBlank()
+                ? user.getFullName()
+                : user.getUsername();
     }
 }
-

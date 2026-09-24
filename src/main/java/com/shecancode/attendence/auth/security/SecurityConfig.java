@@ -178,13 +178,11 @@ private final JwtAuthenticationFilter jwtAuthFilter;
 
                         // Attendance rules MUST come before the broad "/api/v1/programs/**" ADMIN rule,
                         // otherwise first-match wins and TRAINER is wrongly blocked (403) here.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/programs/*/cohorts/*/attendance/**")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/programs/*/cohorts/*/attendance/**")
                         .hasAnyRole("ADMIN", "TRAINER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/programs/*/cohorts/*/attendance/**")
-                        .hasAnyRole("ADMIN", "TRAINER")
-
                         .requestMatchers(HttpMethod.GET, "/api/v1/programs/*/cohorts/*/attendance/**")
-                        .authenticated()
+                        .hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers("/api/v1/attendance/**").hasAnyRole("ADMIN", "TRAINER")
 
                         .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
 
