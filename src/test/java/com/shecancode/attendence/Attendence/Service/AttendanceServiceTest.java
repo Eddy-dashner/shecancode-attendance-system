@@ -10,8 +10,9 @@ import com.shecancode.attendence.Attendence.Model.AttendanceSession;
 import com.shecancode.attendence.Attendence.Repo.AttendanceAlertRepository;
 import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
 import com.shecancode.attendence.Attendence.Repo.AttendanceSessionRepository;
-import com.shecancode.attendence.Attendence.Repo.ParticipantProgressRepository;
+import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.Attendence.dao.AttendanceEntryRequest;
+import com.shecancode.attendence.Attendence.dao.AttendanceReportResponse;
 import com.shecancode.attendence.Attendence.dao.AttendanceRegisterRequest;
 import com.shecancode.attendence.Attendence.dao.AttendanceRegisterResponse;
 import com.shecancode.attendence.Attendence.dao.SkippedStudent;
@@ -19,8 +20,10 @@ import com.shecancode.attendence.Attendence.dao.StudentAttendanceRequestDto;
 import com.shecancode.attendence.Attendence.dao.StudentAttendanceSaveResponse;
 import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.auth.model.Role;
+import com.shecancode.attendence.registration.Enum.LifecycleStatus;
 import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Exception.CohortProgramMismatchException;
+import com.shecancode.attendence.registration.Exception.ReadOnlyException;
 import com.shecancode.attendence.registration.Exception.ResourceNotFoundException;
 import com.shecancode.attendence.registration.Exception.StudentDroppedOutException;
 import com.shecancode.attendence.registration.Model.Cohort;
@@ -52,7 +55,7 @@ class AttendanceServiceTest {
     @Mock private AttendanceRepository attendanceRepository;
     @Mock private AttendanceSessionRepository sessionRepository;
     @Mock private AttendanceAlertRepository alertRepository;
-    @Mock private ParticipantProgressRepository progressRepository;
+    @Mock private ProgramRepository programRepository;
     @Mock private StudentRepository studentRepository;
     @Mock private CohortRepository cohortRepository;
     @Mock private ParticipantService participantService;
@@ -70,7 +73,7 @@ class AttendanceServiceTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(TODAY.atTime(10, 0).atZone(KIGALI).toInstant(), KIGALI);
-        service = new AttendanceService(attendanceRepository, sessionRepository, alertRepository, progressRepository,
+        service = new AttendanceService(attendanceRepository, sessionRepository, alertRepository, programRepository,
                 studentRepository, cohortRepository, participantService, alertService, outboxRepository,
                 outboxEventFactory, clock);
 
@@ -80,7 +83,7 @@ class AttendanceServiceTest {
         trainer = AppUser.builder().id(UUID.randomUUID()).username("t@x.org").fullName("Trainer T").role(Role.TRAINER).build();
         admin = AppUser.builder().id(UUID.randomUUID()).username("a@x.org").fullName("Admin A").role(Role.ADMIN).build();
 
-        lenient().when(cohortRepository.findById(cohort.getId())).thenReturn(Optional.of(cohort));
+        lenient().when(cohortRepository.findByIdAndDeletedAtIsNull(cohort.getId())).thenReturn(Optional.of(cohort));
         lenient().when(sessionRepository.saveAndFlush(any())).thenAnswer(inv -> {
             AttendanceSession s = inv.getArgument(0);
             s.setId(UUID.randomUUID());
@@ -322,5 +325,77 @@ class AttendanceServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> service.updateAttendance(UUID.randomUUID(),
                 new AttendanceEntryRequest(), admin));
+    }
+
+    @Test
+    void givenClosedCohort_whenSavingRegister_thenReadOnly() {
+        cohort.setStatus(LifecycleStatus.CLOSED);
+        Student s = student(Status.ACTIVE, cohort);
+
+        assertThrows(ReadOnlyException.class, () -> service.saveRegister(program.getId(), cohort.getId(), TODAY,
+                register(entry(s, AttendanceStatus.PRESENT)), admin));
+        verifyNoInteractions(attendanceRepository);
+    }
+
+    @Test
+    void givenClosedProgram_whenUpdatingById_thenReadOnly() {
+        program.setStatus(LifecycleStatus.CLOSED);
+        Student s = student(Status.ACTIVE, cohort);
+        Attendance existing = Attendance.builder().attendanceId(UUID.randomUUID()).student(s).program(program)
+                .cohort(cohort).attendanceRecordedDate(TODAY).attendanceStatus(AttendanceStatus.ABSENT).build();
+        when(attendanceRepository.findById(existing.getAttendanceId())).thenReturn(Optional.of(existing));
+
+        assertThrows(ReadOnlyException.class, () -> service.updateAttendance(existing.getAttendanceId(),
+                AttendanceEntryRequest.builder().remarks("x").build(), admin));
+    }
+
+    @Test
+    void givenInactiveAndGraduatedStudents_whenSaving_thenSkipped() {
+        Student inactive = student(Status.INACTIVE, cohort);
+        Student graduated = student(Status.GRADUATED, cohort);
+        when(sessionRepository.findByCohortIdAndSessionDate(cohort.getId(), TODAY)).thenReturn(Optional.empty());
+        when(studentRepository.findAllById(anyList())).thenReturn(List.of(inactive, graduated));
+
+        AttendanceRegisterResponse response = service.saveRegister(program.getId(), cohort.getId(), TODAY,
+                register(entry(inactive, AttendanceStatus.PRESENT), entry(graduated, AttendanceStatus.PRESENT)), admin);
+
+        assertEquals(List.of(
+                new SkippedStudent(inactive.getId(), SkippedStudent.Reason.INACTIVE),
+                new SkippedStudent(graduated.getId(), SkippedStudent.Reason.GRADUATED)), response.getSkipped());
+    }
+
+    @Test
+    void givenReportRange_whenFromAfterTo_thenRejected() {
+        assertThrows(IllegalArgumentException.class, () -> service.getCohortAttendance(program.getId(), cohort.getId(),
+                TODAY, TODAY.minusDays(1), null, null));
+    }
+
+    @Test
+    void givenReportRange_whenLongerThanAYear_thenRejected() {
+        assertThrows(IllegalArgumentException.class, () -> service.getCohortAttendance(program.getId(), cohort.getId(),
+                TODAY.minusDays(400), TODAY, null, null));
+    }
+
+    @Test
+    void givenRecords_whenReporting_thenTotalsAndDefaultRange() {
+        Student s = student(Status.ACTIVE, cohort);
+        AttendanceSession session = AttendanceSession.builder().id(UUID.randomUUID()).build();
+        List<Attendance> rows = List.of(
+                row(s, session, AttendanceStatus.PRESENT), row(s, session, AttendanceStatus.LATE_PRESENT),
+                row(s, session, AttendanceStatus.ABSENT), row(s, session, AttendanceStatus.ABSENT_COMMUNICATED));
+        when(attendanceRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+                any(org.springframework.data.domain.Sort.class))).thenReturn(rows);
+
+        AttendanceReportResponse report = service.getCohortAttendance(program.getId(), cohort.getId(), null, null, null, null);
+
+        assertEquals(TODAY, report.getTo());
+        assertEquals(TODAY.minusDays(29), report.getFrom());
+        assertEquals(new AttendanceReportResponse.Totals(4, 1, 1, 1, 1, 50.0, 50.0), report.getTotals());
+        assertEquals(4, report.getRecords().size());
+    }
+
+    private Attendance row(Student s, AttendanceSession session, AttendanceStatus status) {
+        return Attendance.builder().attendanceId(UUID.randomUUID()).session(session).student(s).program(program)
+                .cohort(cohort).attendanceRecordedDate(TODAY).attendanceStatus(status).build();
     }
 }

@@ -2,7 +2,11 @@ package com.shecancode.attendence.registration.controller;
 
 import com.shecancode.attendence.registration.dao.AdminCreateStudentRequest;
 import com.shecancode.attendence.registration.dao.CompleteProfileRequest;
+import com.shecancode.attendence.registration.Enum.Status;
+import com.shecancode.attendence.registration.dao.PageResponse;
+import com.shecancode.attendence.registration.dao.StudentDetailResponse;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
+import com.shecancode.attendence.registration.service.StudentLifeCycleService;
 import com.shecancode.attendence.registration.service.StudentRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,17 +20,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping( "/api/v1/students")
 @Slf4j
 public class StudentController {
     private final StudentRegistrationService service;
+    private final StudentLifeCycleService lifeCycleService;
 
-
-    public StudentController(StudentRegistrationService service) {
+    public StudentController(StudentRegistrationService service, StudentLifeCycleService lifeCycleService) {
         this.service = service;
+        this.lifeCycleService = lifeCycleService;
     }
 
     @PostMapping
@@ -82,15 +87,37 @@ public class StudentController {
     }
 
     @GetMapping()
-    @Operation(tags = {"Students"}, summary = "List all students (ADMIN or TRAINER)",
-            description = "Returns all registered students. TRAINER has read-only access per the role model.")
+    @Operation(tags = {"Students"}, summary = "Search students (ADMIN or TRAINER)",
+            description = "Paged list ordered by name. All filters are optional; search matches email, first or " +
+                    "last name. page starts at 0; size is 1-100.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "200", description = "Page returned"),
+            @ApiResponse(responseCode = "400", description = "Invalid page or size", content = @Content),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
             @ApiResponse(responseCode = "403", description = "Caller is a STUDENT (not permitted)", content = @Content)
     })
     @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
-    public ResponseEntity<List<StudentResponseDao>> getAllStudents(){
-        return ResponseEntity.ok(service.getAllStudents());
+    public ResponseEntity<PageResponse<StudentResponseDao>> getAllStudents(
+            @RequestParam(required = false) UUID programId,
+            @RequestParam(required = false) UUID cohortId,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(lifeCycleService.search(programId, cohortId, status, search, page, size));
+    }
+
+    @GetMapping("/{studentId}")
+    @Operation(tags = {"Students"}, summary = "Get one student (ADMIN or TRAINER)",
+            description = "The student's profile with their attendance summary in their program.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Student returned"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Caller is a STUDENT (not permitted)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Student not found", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+    public ResponseEntity<StudentDetailResponse> getStudent(@PathVariable UUID studentId) {
+        return ResponseEntity.ok(lifeCycleService.getStudent(studentId));
     }
 }

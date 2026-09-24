@@ -37,4 +37,7 @@ public class StudentResponseDao {
 
     private String cohortNumber;
 
+    private UUID cohortId;
+
+    private UUID programId;
 }

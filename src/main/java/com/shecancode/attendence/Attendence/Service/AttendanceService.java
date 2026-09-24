@@ -12,31 +12,36 @@ import com.shecancode.attendence.Attendence.Mapper.AttendanceMapper;
 import com.shecancode.attendence.Attendence.Model.Attendance;
 import com.shecancode.attendence.Attendence.Model.AttendanceAlert;
 import com.shecancode.attendence.Attendence.Model.AttendanceSession;
-import com.shecancode.attendence.Attendence.Model.ParticipantProgress;
 import com.shecancode.attendence.Attendence.Repo.AttendanceAlertRepository;
 import com.shecancode.attendence.Attendence.Repo.AttendanceRepository;
 import com.shecancode.attendence.Attendence.Repo.AttendanceSessionRepository;
-import com.shecancode.attendence.Attendence.Repo.ParticipantProgressRepository;
 import com.shecancode.attendence.Attendence.dao.*;
 import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.auth.model.Role;
 import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Exception.CohortProgramMismatchException;
+import com.shecancode.attendence.registration.Exception.ProgramNotFoundException;
+import com.shecancode.attendence.registration.Exception.ReadOnlyException;
 import com.shecancode.attendence.registration.Exception.ResourceNotFoundException;
 import com.shecancode.attendence.registration.Exception.StudentDroppedOutException;
+import com.shecancode.attendence.registration.Exception.StudentNotActiveException;
 import com.shecancode.attendence.registration.Exception.StudentNotFoundException;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
+import com.shecancode.attendence.registration.Repository.ProgramRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,10 +50,13 @@ import java.util.stream.Collectors;
 @Service
 public class AttendanceService {
 
+    static final int DEFAULT_REPORT_DAYS = 30;
+    static final int MAX_REPORT_DAYS = 366;
+
     private final AttendanceRepository attendanceRepository;
     private final AttendanceSessionRepository sessionRepository;
     private final AttendanceAlertRepository alertRepository;
-    private final ParticipantProgressRepository progressRepository;
+    private final ProgramRepository programRepository;
     private final StudentRepository studentRepository;
     private final CohortRepository cohortRepository;
     private final ParticipantService participantService;
@@ -60,7 +68,7 @@ public class AttendanceService {
     public AttendanceService(AttendanceRepository attendanceRepository,
                              AttendanceSessionRepository sessionRepository,
                              AttendanceAlertRepository alertRepository,
-                             ParticipantProgressRepository progressRepository,
+                             ProgramRepository programRepository,
                              StudentRepository studentRepository,
                              CohortRepository cohortRepository,
                              ParticipantService participantService,
@@ -71,7 +79,7 @@ public class AttendanceService {
         this.attendanceRepository = attendanceRepository;
         this.sessionRepository = sessionRepository;
         this.alertRepository = alertRepository;
-        this.progressRepository = progressRepository;
+        this.programRepository = programRepository;
         this.studentRepository = studentRepository;
         this.cohortRepository = cohortRepository;
         this.participantService = participantService;
@@ -90,6 +98,9 @@ public class AttendanceService {
     public AttendanceRegisterResponse saveRegister(UUID programId, UUID cohortId, LocalDate date,
                                                    AttendanceRegisterRequest request, AppUser caller) {
         Cohort cohort = loadCohort(programId, cohortId);
+        if (cohort.isReadOnly()) {
+            throw new ReadOnlyException("Cohort " + cohort.getCohortNumber() + " is closed; attendance can only be viewed.");
+        }
         LocalDate today = LocalDate.now(clock);
         validateEntries(request.getStudents());
         validateDate(cohort, date, today);
@@ -228,6 +239,8 @@ public class AttendanceService {
                 case NOT_FOUND -> throw new StudentNotFoundException("Student not found: " + studentId);
                 case NOT_IN_COHORT -> throw new StudentNotFoundException("Student " + studentId + " is not in this cohort");
                 case DROPPED_OUT -> throw new StudentDroppedOutException("Student " + studentId + " has dropped out");
+                case INACTIVE -> throw new StudentNotActiveException("Student " + studentId + " is inactive");
+                case GRADUATED -> throw new StudentNotActiveException("Student " + studentId + " has graduated");
             }
         }
         return StudentAttendanceSaveResponse.builder()
@@ -284,10 +297,10 @@ public class AttendanceService {
         Cohort cohort = loadCohort(programId, cohortId);
         List<Student> students = enrolledStudents(cohortId);
 
-        Map<UUID, ParticipantProgress> progress = progressRepository
-                .findByProgramIdAndStudentIdIn(programId, students.stream().map(Student::getId).toList())
-                .stream()
-                .collect(Collectors.toMap(p -> p.getStudent().getId(), Function.identity()));
+        // Statuses per student, newest first (the query's order is kept by groupingBy's lists).
+        Map<UUID, List<AttendanceStatus>> statuses = attendanceRepository.findStatusesByCohort(cohortId).stream()
+                .collect(Collectors.groupingBy(row -> (UUID) row[0],
+                        Collectors.mapping(row -> (AttendanceStatus) row[1], Collectors.toList())));
 
         Map<UUID, List<AlertType>> activeAlerts = alertRepository
                 .findByCohortIdAndStatusOrderByCreatedAtDesc(cohortId, AlertStatus.ACTIVE).stream()
@@ -295,17 +308,11 @@ public class AttendanceService {
                         Collectors.mapping(AttendanceAlert::getAlertType, Collectors.toList())));
 
         List<CohortAttendanceSummaryResponse.StudentSummary> rows = students.stream()
-                .map(student -> {
-                    ParticipantProgress p = progress.get(student.getId());
-                    return new CohortAttendanceSummaryResponse.StudentSummary(
-                            student.getId(),
-                            AttendanceMapper.studentName(student),
-                            p == null ? null : p.getAttendancePoints(),
-                            p == null ? null : p.getAttendancePercentage(),
-                            p == null ? null : p.getColor(),
-                            p == null ? null : p.getConsecutiveAbsences(),
-                            activeAlerts.getOrDefault(student.getId(), List.of()));
-                })
+                .map(student -> new CohortAttendanceSummaryResponse.StudentSummary(
+                        student.getId(),
+                        AttendanceMapper.studentName(student),
+                        AttendanceSummaryDto.of(AttendanceScore.of(statuses.getOrDefault(student.getId(), List.of()))),
+                        activeAlerts.getOrDefault(student.getId(), List.of())))
                 .toList();
 
         return CohortAttendanceSummaryResponse.builder()
@@ -316,10 +323,78 @@ public class AttendanceService {
                 .build();
     }
 
+    /** Attendance of one cohort over a date range, optionally for one student or status. */
+    @Transactional(readOnly = true)
+    public AttendanceReportResponse getCohortAttendance(UUID programId, UUID cohortId, LocalDate from, LocalDate to,
+                                                        UUID studentId, AttendanceStatus status) {
+        loadCohort(programId, cohortId);
+        return report(programId, cohortId, from, to, studentId, status);
+    }
+
+    /** Attendance of a whole program over a date range, optionally for one cohort or status. */
+    @Transactional(readOnly = true)
+    public AttendanceReportResponse getProgramAttendance(UUID programId, LocalDate from, LocalDate to,
+                                                         UUID cohortId, AttendanceStatus status) {
+        programRepository.findByIdAndDeletedAtIsNull(programId)
+                .orElseThrow(() -> new ProgramNotFoundException("Program [" + programId + "] not found."));
+        if (cohortId != null) loadCohort(programId, cohortId);
+        return report(programId, cohortId, from, to, null, status);
+    }
+
+    private AttendanceReportResponse report(UUID programId, UUID cohortId, LocalDate from, LocalDate to,
+                                            UUID studentId, AttendanceStatus status) {
+        LocalDate today = LocalDate.now(clock);
+        LocalDate end = to != null ? to : today;
+        LocalDate start = from != null ? from : end.minusDays(DEFAULT_REPORT_DAYS - 1);
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("from (" + start + ") must not be after to (" + end + ")");
+        }
+        if (ChronoUnit.DAYS.between(start, end) >= MAX_REPORT_DAYS) {
+            throw new IllegalArgumentException("A report can cover at most " + MAX_REPORT_DAYS + " days");
+        }
+
+        Specification<Attendance> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("program").get("id"), programId),
+                cb.between(root.get("attendanceRecordedDate"), start, end));
+        if (cohortId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("cohort").get("id"), cohortId));
+        if (studentId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("student").get("id"), studentId));
+        if (status != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("attendanceStatus"), status));
+
+        List<Attendance> records = attendanceRepository.findAll(spec, Sort.by(
+                Sort.Order.desc("attendanceRecordedDate"),
+                Sort.Order.asc("student.studentFirstName"),
+                Sort.Order.asc("student.studentLastName")));
+
+        return AttendanceReportResponse.builder()
+                .programId(programId)
+                .cohortId(cohortId)
+                .from(start)
+                .to(end)
+                .totals(totals(records))
+                .records(records.stream().map(a -> AttendanceMapper.toResponseDTO(a, today)).toList())
+                .build();
+    }
+
+    private static AttendanceReportResponse.Totals totals(List<Attendance> records) {
+        Map<AttendanceStatus, Long> counts = records.stream()
+                .collect(Collectors.groupingBy(Attendance::getAttendanceStatus, Collectors.counting()));
+        int present = counts.getOrDefault(AttendanceStatus.PRESENT, 0L).intValue();
+        int late = counts.getOrDefault(AttendanceStatus.LATE_PRESENT, 0L).intValue();
+        int absent = counts.getOrDefault(AttendanceStatus.ABSENT, 0L).intValue();
+        int communicated = counts.getOrDefault(AttendanceStatus.ABSENT_COMMUNICATED, 0L).intValue();
+        int total = records.size();
+        return new AttendanceReportResponse.Totals(total, present, late, absent, communicated,
+                percent(present + late, total), percent(absent + communicated, total));
+    }
+
+    private static double percent(int part, int total) {
+        return total == 0 ? 0 : Math.round(part * 1000.0 / total) / 10.0;
+    }
+
     @Transactional(readOnly = true)
     public StudentAttendanceHistoryResponse getStudentHistory(UUID programId, UUID cohortId, UUID studentId) {
         loadCohort(programId, cohortId);
-        Student student = studentRepository.findById(studentId)
+        Student student = studentRepository.findByIdAndDeletedAtIsNull(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("Student not found: " + studentId));
         if (student.getCohort() == null || !student.getCohort().getId().equals(cohortId)) {
             throw new StudentNotFoundException("Student " + studentId + " is not in this cohort");
@@ -370,7 +445,7 @@ public class AttendanceService {
     }
 
     private Cohort loadCohort(UUID programId, UUID cohortId) {
-        Cohort cohort = cohortRepository.findById(cohortId)
+        Cohort cohort = cohortRepository.findByIdAndDeletedAtIsNull(cohortId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cohort not found: " + cohortId));
         if (!cohort.getProgram().getId().equals(programId)) {
             throw new CohortProgramMismatchException("Cohort " + cohortId + " does not belong to program " + programId);
@@ -378,9 +453,11 @@ public class AttendanceService {
         return cohort;
     }
 
+    /** Students who can be marked: PENDING (invited, not yet activated) and ACTIVE. */
     private List<Student> enrolledStudents(UUID cohortId) {
-        return studentRepository.findByCohort_IdOrderByStudentFirstNameAscStudentLastNameAsc(cohortId).stream()
-                .filter(s -> s.getStatus() != Status.DROPPED_OUT)
+        return studentRepository.findByCohort_IdAndDeletedAtIsNullOrderByStudentFirstNameAscStudentLastNameAsc(cohortId)
+                .stream()
+                .filter(s -> s.getStatus() == Status.PENDING || s.getStatus() == Status.ACTIVE)
                 .toList();
     }
 
@@ -408,8 +485,10 @@ public class AttendanceService {
     }
 
     private static SkippedStudent.Reason skipReason(Student student, UUID programId, UUID cohortId) {
-        if (student == null) return SkippedStudent.Reason.NOT_FOUND;
+        if (student == null || student.getDeletedAt() != null) return SkippedStudent.Reason.NOT_FOUND;
         if (student.getStatus() == Status.DROPPED_OUT) return SkippedStudent.Reason.DROPPED_OUT;
+        if (student.getStatus() == Status.INACTIVE) return SkippedStudent.Reason.INACTIVE;
+        if (student.getStatus() == Status.GRADUATED) return SkippedStudent.Reason.GRADUATED;
         boolean inCohort = student.getCohort() != null && student.getCohort().getId().equals(cohortId)
                 && student.getProgram() != null && student.getProgram().getId().equals(programId);
         return inCohort ? null : SkippedStudent.Reason.NOT_IN_COHORT;
