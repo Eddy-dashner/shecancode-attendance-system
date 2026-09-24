@@ -15,6 +15,8 @@ tags:
     description: Trainer invitation (ADMIN only)
   - name: Students
     description: Student enrolment, activation profile and lookup
+  - name: Attendance
+    description: Cohort registers, summaries, student history and absence alerts
 
 paths:
   # ─── AUTHENTICATION ────────────────────────────────────────────────────────
@@ -402,12 +404,331 @@ paths:
         '404':
           description: Student not found
 
+  /api/v1/students/me/attendance:
+    get:
+      tags: [Students]
+      summary: Get my attendance (STUDENT only)
+      description: The authenticated student's attendance history, newest first, with their current score.
+      operationId: getMyAttendance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: History returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAttendanceHistoryResponse'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is not a STUDENT
+        '404':
+          description: No student record for this account
+
+  # ─── ATTENDANCE ────────────────────────────────────────────────────────────
+  /api/v1/programs/{programId}/cohorts/{cohortId}/attendance/sessions/{date}:
+    put:
+      tags: [Attendance]
+      summary: Save the register for a date (ADMIN or TRAINER)
+      description: >
+        Creates or updates attendance for the listed students on this date. Safe to
+        call repeatedly: re-sending the same register changes nothing. Trainers can
+        only save today's register; admins can save any date. Students who are
+        unknown, in another cohort or dropped out are returned in `skipped` instead of
+        failing the request. The recorder is taken from the JWT. Alerts raised by
+        this save (3 absences in a row / 3 in total) are returned in `alertsRaised`
+        and emailed to the student and the recorder.
+      operationId: saveRegister
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProgramId'
+        - $ref: '#/components/parameters/CohortId'
+        - $ref: '#/components/parameters/SessionDate'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendanceRegisterRequest'
+      responses:
+        '200':
+          description: Register saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceRegisterResponse'
+        '400':
+          description: >
+            Validation failed: future date, date outside the cohort's dates, missing
+            check-in time for PRESENT/LATE_PRESENT, duplicate student, or cohort not
+            in this program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT, or a TRAINER saving a day other than today
+        '404':
+          description: Cohort not found
+        '409':
+          description: Someone else saved this register at the same moment; reload and retry
+    get:
+      tags: [Attendance]
+      summary: Get the register for a date (ADMIN or TRAINER)
+      description: >
+        Lists every enrolled (not dropped-out) student with their status for the date.
+        Students not marked yet have a null status; `sessionId` is null when nobody
+        has taken attendance for the date.
+      operationId: getRegister
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProgramId'
+        - $ref: '#/components/parameters/CohortId'
+        - $ref: '#/components/parameters/SessionDate'
+      responses:
+        '200':
+          description: Register returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CohortRegisterResponse'
+        '400':
+          description: Cohort not in this program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT
+        '404':
+          description: Cohort not found
+
+  /api/v1/programs/{programId}/cohorts/{cohortId}/attendance/summary:
+    get:
+      tags: [Attendance]
+      summary: Cohort attendance summary (ADMIN or TRAINER)
+      description: Attendance percentage, color, consecutive absences and active alerts for every enrolled student.
+      operationId: getAttendanceSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProgramId'
+        - $ref: '#/components/parameters/CohortId'
+      responses:
+        '200':
+          description: Summary returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CohortAttendanceSummaryResponse'
+        '400':
+          description: Cohort not in this program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT
+        '404':
+          description: Cohort not found
+
+  /api/v1/programs/{programId}/cohorts/{cohortId}/attendance/students/{studentId}:
+    get:
+      tags: [Attendance]
+      summary: A student's attendance history (ADMIN or TRAINER)
+      description: Every recorded session for the student, newest first, with their current score.
+      operationId: getStudentAttendanceHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProgramId'
+        - $ref: '#/components/parameters/CohortId'
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: History returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAttendanceHistoryResponse'
+        '400':
+          description: Cohort not in this program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT
+        '404':
+          description: Cohort or student not found, or student not in this cohort
+
+  /api/v1/programs/{programId}/cohorts/{cohortId}/attendance/sessions/{date}/students/{studentId}:
+    put:
+      tags: [Attendance]
+      summary: Save one student's attendance for a date (ADMIN or TRAINER)
+      description: >
+        Records or re-records a single student's attendance. Same rules as the full
+        register (trainers: today only; recorder taken from the JWT; alerts raised and
+        emailed), but a student who is unknown, in another cohort or dropped out is an
+        error instead of being skipped.
+      operationId: saveStudentAttendance
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProgramId'
+        - $ref: '#/components/parameters/CohortId'
+        - $ref: '#/components/parameters/SessionDate'
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AttendanceEntryRequest'
+              required: [attendanceStatus]
+      responses:
+        '200':
+          description: Attendance saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAttendanceSaveResponse'
+        '400':
+          description: >
+            Validation failed: missing status, missing check-in time for
+            PRESENT/LATE_PRESENT, future date, outside the cohort's dates, or cohort
+            not in this program
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT, or a TRAINER saving a day other than today
+        '404':
+          description: Cohort or student not found, or student not in this cohort
+        '409':
+          description: Student has dropped out, or someone saved at the same moment; retry
+
+  /api/v1/attendance/{attendanceId}:
+    patch:
+      tags: [Attendance]
+      summary: Update one attendance record (ADMIN or TRAINER)
+      description: >
+        Partial update: only the fields sent are changed. Trainers can only change
+        records dated today; admins can change any record. A status change rescores
+        the student and raises or resolves alerts. Changing to PRESENT/LATE_PRESENT
+        needs a check-in time if the record has none; changing to an absence clears it.
+      operationId: updateAttendance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: attendanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendanceEntryRequest'
+      responses:
+        '200':
+          description: Attendance updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAttendanceSaveResponse'
+        '400':
+          description: Validation failed (e.g. PRESENT without a check-in time)
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT, or a TRAINER changing a record not dated today
+        '404':
+          description: Attendance record not found
+        '409':
+          description: Student has dropped out, or someone saved at the same moment; retry
+
+  /api/v1/attendance/alerts:
+    get:
+      tags: [Attendance]
+      summary: List absence alerts (ADMIN or TRAINER)
+      description: >
+        Alerts raised when a student reaches 3 absences in a row or 3 in total
+        (ABSENT and ABSENT_COMMUNICATED both count). An alert is ACTIVE while the
+        condition holds and RESOLVED once it stops holding.
+      operationId: getAttendanceAlerts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cohortId
+          in: query
+          required: false
+          description: Only alerts for this cohort; all cohorts when omitted
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ACTIVE, RESOLVED]
+            default: ACTIVE
+      responses:
+        '200':
+          description: Alerts returned, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttendanceAlertResponse'
+        '401':
+          description: Missing or invalid JWT
+        '403':
+          description: Caller is a STUDENT
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  parameters:
+    ProgramId:
+      name: programId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440010"
+    CohortId:
+      name: cohortId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+    SessionDate:
+      name: date
+      in: path
+      required: true
+      description: The class day (yyyy-MM-dd), in the programme's timezone (Africa/Kigali)
+      schema:
+        type: string
+        format: date
+        example: "2026-03-02"
 
   schemas:
     # ─── Auth ───────────────────────────────────────────────────────────────
@@ -509,7 +830,6 @@ components:
           format: int64
           description: Access token lifetime in seconds
           example: 900
-          description: Frontend routes on this — PROFILE_INCOMPLETE → profile page, else dashboard.
 
     # ─── Administration ───────────────────────────────────────────────────────
     CohortRequestDao:
@@ -618,3 +938,245 @@ components:
         estimateGraduationDate: { type: string, format: date }
         daysRemainingToGraduate: { type: integer }
         cohortNumber: { type: string }
+
+    # ─── Attendance ───────────────────────────────────────────────────────────
+    AttendanceStatus:
+      type: string
+      enum: [PRESENT, ABSENT, ABSENT_COMMUNICATED, LATE_PRESENT]
+      description: >
+        ABSENT costs 1 point, ABSENT_COMMUNICATED 0.5 points, and every 3 LATE_PRESENT
+        cost 1 point.
+
+    ProgressColor:
+      type: string
+      enum: [GREEN, YELLOW, RED]
+      description: GREEN at 85% or more, YELLOW above 60%, RED otherwise.
+
+    AlertType:
+      type: string
+      enum: [CONSECUTIVE_ABSENCES, TOTAL_ABSENCES]
+
+    StudentAttendanceRequestDto:
+      type: object
+      required: [studentId, attendanceStatus]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440011"
+        attendanceStatus:
+          $ref: '#/components/schemas/AttendanceStatus'
+        checkInTime:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: "09:00:00"
+          description: Required for PRESENT and LATE_PRESENT; ignored for absences.
+        remarks:
+          type: string
+          maxLength: 255
+          example: "On time"
+
+    AttendanceRegisterRequest:
+      type: object
+      required: [students]
+      properties:
+        students:
+          type: array
+          minItems: 1
+          description: Each student may appear once.
+          items:
+            $ref: '#/components/schemas/StudentAttendanceRequestDto'
+
+    AttendanceResponse:
+      type: object
+      properties:
+        attendanceId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        studentName: { type: string }
+        cohortId: { type: string, format: uuid }
+        cohortNumber: { type: string }
+        programId: { type: string, format: uuid }
+        programName: { type: string }
+        attendanceStatus: { $ref: '#/components/schemas/AttendanceStatus' }
+        checkInTime: { type: string, example: "09:00:00", nullable: true }
+        remarks: { type: string, nullable: true }
+        attendanceRecordedDate: { type: string, format: date }
+        graduationDate:
+          type: string
+          format: date
+          description: The cohort's end date
+        daysRemainingUntilGraduation: { type: integer }
+        recordedById:
+          type: string
+          format: uuid
+          description: The user who last saved this record
+        recordedByName: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    SkippedStudent:
+      type: object
+      properties:
+        studentId: { type: string, format: uuid }
+        reason:
+          type: string
+          enum: [NOT_FOUND, NOT_IN_COHORT, DROPPED_OUT]
+
+    AttendanceAlertResponse:
+      type: object
+      properties:
+        alertId: { type: string, format: uuid }
+        alertType: { $ref: '#/components/schemas/AlertType' }
+        status: { type: string, enum: [ACTIVE, RESOLVED] }
+        absenceCount:
+          type: integer
+          description: Absences at the moment the alert fired
+        studentId: { type: string, format: uuid }
+        studentName: { type: string }
+        cohortId: { type: string, format: uuid }
+        cohortNumber: { type: string }
+        programId: { type: string, format: uuid }
+        programName: { type: string }
+        triggeredOnDate: { type: string, format: date }
+        triggeredByName:
+          type: string
+          description: Trainer/admin whose save crossed the threshold (they are emailed)
+        createdAt: { type: string, format: date-time }
+        resolvedAt: { type: string, format: date-time, nullable: true }
+        studentNotifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the alert email reached the student; null until sent
+        trainerNotifiedAt: { type: string, format: date-time, nullable: true }
+
+    AttendanceRegisterResponse:
+      type: object
+      properties:
+        sessionId: { type: string, format: uuid }
+        programId: { type: string, format: uuid }
+        cohortId: { type: string, format: uuid }
+        sessionDate: { type: string, format: date }
+        takenByName:
+          type: string
+          description: Who first took the register for this date
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceResponse'
+        skipped:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkippedStudent'
+        alertsRaised:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceAlertResponse'
+
+    CohortRegisterResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Null when nobody has taken attendance for this date yet
+        programId: { type: string, format: uuid }
+        cohortId: { type: string, format: uuid }
+        sessionDate: { type: string, format: date }
+        takenByName: { type: string, nullable: true }
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              studentId: { type: string, format: uuid }
+              studentName: { type: string }
+              attendanceId: { type: string, format: uuid, nullable: true }
+              attendanceStatus:
+                allOf:
+                  - $ref: '#/components/schemas/AttendanceStatus'
+                nullable: true
+                description: Null when the student has not been marked yet
+              checkInTime: { type: string, example: "09:00:00", nullable: true }
+              remarks: { type: string, nullable: true }
+
+    CohortAttendanceSummaryResponse:
+      type: object
+      properties:
+        programId: { type: string, format: uuid }
+        cohortId: { type: string, format: uuid }
+        cohortNumber: { type: string }
+        students:
+          type: array
+          items:
+            type: object
+            description: Progress fields are null for a student with no attendance recorded yet.
+            properties:
+              studentId: { type: string, format: uuid }
+              studentName: { type: string }
+              attendancePoints: { type: number, nullable: true }
+              attendancePercentage: { type: number, nullable: true }
+              color:
+                allOf:
+                  - $ref: '#/components/schemas/ProgressColor'
+                nullable: true
+              consecutiveAbsences: { type: integer, nullable: true }
+              activeAlerts:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertType'
+
+    StudentAttendanceHistoryResponse:
+      type: object
+      properties:
+        studentId: { type: string, format: uuid }
+        studentName: { type: string }
+        programId: { type: string, format: uuid }
+        cohortId: { type: string, format: uuid }
+        sessionsRecorded: { type: integer }
+        absent: { type: integer }
+        absentCommunicated: { type: integer }
+        late: { type: integer }
+        consecutiveAbsences: { type: integer }
+        attendancePoints:
+          type: number
+          description: Sessions recorded minus points lost
+        attendancePercentage:
+          type: number
+          description: Points kept / sessions recorded × 100
+        color: { $ref: '#/components/schemas/ProgressColor' }
+        records:
+          type: array
+          description: Newest first
+          items:
+            $ref: '#/components/schemas/AttendanceResponse'
+
+    AttendanceEntryRequest:
+      type: object
+      description: >
+        One student's entry when the student is identified by the URL. For an update,
+        omitted fields keep their current value.
+      properties:
+        attendanceStatus:
+          $ref: '#/components/schemas/AttendanceStatus'
+        checkInTime:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: "09:20:00"
+          description: Required for PRESENT and LATE_PRESENT; ignored for absences.
+        remarks:
+          type: string
+          maxLength: 255
+          example: "Traffic"
+
+    StudentAttendanceSaveResponse:
+      type: object
+      properties:
+        record:
+          $ref: '#/components/schemas/AttendanceResponse'
+        alertsRaised:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttendanceAlertResponse'
