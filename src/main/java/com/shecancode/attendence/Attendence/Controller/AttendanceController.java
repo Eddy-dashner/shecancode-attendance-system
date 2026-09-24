@@ -1,7 +1,9 @@
 package com.shecancode.attendence.Attendence.Controller;
 
 import com.shecancode.attendence.Attendence.Service.AttendanceService;
+import com.shecancode.attendence.Attendence.Enum.AttendanceStatus;
 import com.shecancode.attendence.Attendence.dao.AttendanceEntryRequest;
+import com.shecancode.attendence.Attendence.dao.AttendanceReportResponse;
 import com.shecancode.attendence.Attendence.dao.AttendanceRegisterRequest;
 import com.shecancode.attendence.Attendence.dao.AttendanceRegisterResponse;
 import com.shecancode.attendence.Attendence.dao.CohortAttendanceSummaryResponse;
@@ -41,7 +43,8 @@ public class AttendanceController {
             description = "Creates or updates attendance for the listed students on this date. Safe to call repeatedly. " +
                     "Trainers can only save today's register; admins can save any date. Students who are unknown, " +
                     "in another cohort or dropped out are returned in `skipped`. Alerts raised by this save are " +
-                    "returned in `alertsRaised` and emailed to the student and recorder.")
+                    "returned in `alertsRaised` and emailed to the student and recorder. Refused (409) while the " +
+                    "cohort or its program is closed.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Register saved"),
             @ApiResponse(responseCode = "400", description = "Validation failed (future date, outside cohort dates, " +
@@ -49,7 +52,7 @@ public class AttendanceController {
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
             @ApiResponse(responseCode = "403", description = "Caller is a STUDENT, or a TRAINER saving a day other than today", content = @Content),
             @ApiResponse(responseCode = "404", description = "Cohort not found", content = @Content),
-            @ApiResponse(responseCode = "409", description = "Someone else saved this register at the same moment; retry", content = @Content)
+            @ApiResponse(responseCode = "409", description = "Cohort is closed, or someone else saved this register at the same moment", content = @Content)
     })
     @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
     public ResponseEntity<AttendanceRegisterResponse> saveRegister(
@@ -97,6 +100,29 @@ public class AttendanceController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         return ResponseEntity.ok(attendanceService.getRegister(programId, cohortId, date));
+    }
+
+    @GetMapping
+    @Operation(summary = "Cohort attendance for a date range (ADMIN or TRAINER)",
+            description = "Records newest first with totals. from/to default to the last 30 days ending today; " +
+                    "a range can cover at most 366 days. Optionally filter by studentId and status.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Report returned"),
+            @ApiResponse(responseCode = "400", description = "from after to, range too long, or cohort not in program", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Caller is a STUDENT", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Cohort not found", content = @Content)
+    })
+    @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+    public ResponseEntity<AttendanceReportResponse> getCohortAttendance(
+            @PathVariable UUID programId,
+            @PathVariable UUID cohortId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) UUID studentId,
+            @RequestParam(required = false) AttendanceStatus status) {
+
+        return ResponseEntity.ok(attendanceService.getCohortAttendance(programId, cohortId, from, to, studentId, status));
     }
 
     @GetMapping("/summary")

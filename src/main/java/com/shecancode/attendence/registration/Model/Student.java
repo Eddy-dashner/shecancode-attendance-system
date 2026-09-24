@@ -5,6 +5,7 @@ import com.shecancode.attendence.registration.Enum.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -56,6 +57,10 @@ public class Student {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private AppUser user;
+
+    // Soft delete: set when an admin deletes the student; history is kept.
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     public String getFullName() {
         return studentFirstName + " " + studentLastName;

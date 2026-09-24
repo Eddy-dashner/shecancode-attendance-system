@@ -2,6 +2,8 @@ package com.shecancode.attendence.registration.dao;
 
 import lombok.*;
 
+import com.shecancode.attendence.registration.Enum.LifecycleStatus;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -18,4 +20,7 @@ public class CohortResponseDao {
     private LocalDate endDate;
     private UUID programId;
     private String programName;
+    private LifecycleStatus status;
+    // True when the cohort or its program is closed.
+    private boolean readOnly;
 }

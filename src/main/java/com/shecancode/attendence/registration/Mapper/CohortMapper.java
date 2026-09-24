@@ -19,6 +19,8 @@ public class CohortMapper {
                 .endDate(cohort.getEndDate())
                 .programId(program != null ? program.getId() : null)
                 .programName(program != null ? program.getProgramName() : null)
+                .status(cohort.getStatus())
+                .readOnly(cohort.isReadOnly())
                 .build();
     }
 

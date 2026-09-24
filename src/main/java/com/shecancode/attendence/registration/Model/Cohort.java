@@ -3,6 +3,9 @@ package com.shecancode.attendence.registration.Model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.shecancode.attendence.registration.Enum.LifecycleStatus;
+
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -35,4 +38,18 @@ public class Cohort {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private LifecycleStatus status = LifecycleStatus.OPEN;
+
+    // Soft delete: set when an admin deletes the cohort; null while it exists.
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    /** Read-only when the cohort or its program is closed. */
+    public boolean isReadOnly() {
+        return status == LifecycleStatus.CLOSED || (program != null && program.isClosed());
+    }
 }

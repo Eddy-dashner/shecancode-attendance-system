@@ -19,7 +19,9 @@ CREATE TABLE program (
                          program_name VARCHAR(255) NOT NULL,
                          program_duration INTEGER,
                          program_start_date DATE NOT NULL,
-                         program_end_date DATE NOT NULL
+                         program_end_date DATE NOT NULL,
+                         status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+                         deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- ==========================================
@@ -31,6 +33,8 @@ CREATE TABLE cohort (
                         start_date DATE NOT NULL,
                         end_date DATE NOT NULL,
                         program_id UUID NOT NULL,
+                        status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+                        deleted_at TIMESTAMP WITH TIME ZONE,
 
                         CONSTRAINT fk_cohort_program
                             FOREIGN KEY (program_id)
@@ -54,6 +58,7 @@ CREATE TABLE student (
                          cohort_id UUID NOT NULL,
                          program_id UUID NOT NULL,
                          user_id UUID,
+                         deleted_at TIMESTAMP WITH TIME ZONE,
 
                          CONSTRAINT fk_student_cohort
                              FOREIGN KEY (cohort_id)

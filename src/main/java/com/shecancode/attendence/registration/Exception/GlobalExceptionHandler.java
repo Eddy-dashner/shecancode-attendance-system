@@ -136,6 +136,10 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistException.class,
             StudentDroppedOutException.class,
             AttendanceConflictException.class,
+            ReadOnlyException.class,
+            InvalidStatusTransitionException.class,
+            ResourceInUseException.class,
+            StudentNotActiveException.class,
             AccountAlreadyActivatedException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {
