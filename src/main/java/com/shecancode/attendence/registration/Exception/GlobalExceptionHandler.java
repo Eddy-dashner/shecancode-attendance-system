@@ -1,5 +1,7 @@
 package com.shecancode.attendence.registration.Exception;
 
+import com.shecancode.attendence.Attendence.Exception.AttendanceConflictException;
+import com.shecancode.attendence.Attendence.Exception.AttendanceEditLockedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,6 +78,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AttendanceEditLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAttendanceLocked(AttendanceEditLockedException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                StringEscapeUtils.escapeHtml4(ex.getMessage()),
+                StringEscapeUtils.escapeHtml4(request.getRequestURI()));
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
         ErrorResponse error = new ErrorResponse(
@@ -122,6 +135,11 @@ public class GlobalExceptionHandler {
             CohortAlreadyExistException.class,
             EmailAlreadyExistException.class,
             StudentDroppedOutException.class,
+            AttendanceConflictException.class,
+            ReadOnlyException.class,
+            InvalidStatusTransitionException.class,
+            ResourceInUseException.class,
+            StudentNotActiveException.class,
             AccountAlreadyActivatedException.class
     })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex, HttpServletRequest request) {

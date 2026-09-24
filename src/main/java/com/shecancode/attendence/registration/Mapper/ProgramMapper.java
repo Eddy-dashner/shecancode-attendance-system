@@ -22,6 +22,7 @@ public class ProgramMapper {
                 .programName(program.getProgramName())
                 .programStartDate(program.getProgramStartDate())
                 .programEndDate(program.getProgramEndDate())
+                .status(program.getStatus())
 
                 .build();
     }

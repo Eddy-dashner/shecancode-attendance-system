@@ -7,6 +7,9 @@ import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 public class StudentMapper {
     public static StudentResponseDao toDTO (Student student){
         if (student == null)
@@ -27,6 +30,11 @@ public class StudentMapper {
                 .programStartedDate(cohort != null ? cohort.getStartDate() : null)
                 .cohortNumber(cohort != null ? cohort.getCohortNumber() : null)
                 .estimateGraduationDate(cohort != null ? cohort.getEndDate() : null)
+                .daysRemainingToGraduate(cohort != null && cohort.getEndDate() != null
+                        ? (int) Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), cohort.getEndDate()))
+                        : 0)
+                .cohortId(cohort != null ? cohort.getId() : null)
+                .programId(program != null ? program.getId() : null)
                 .build();
     }
 

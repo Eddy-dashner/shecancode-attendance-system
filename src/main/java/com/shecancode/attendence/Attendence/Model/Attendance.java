@@ -6,9 +6,6 @@ import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,11 +13,10 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "attendance", indexes = {
-        // Highly recommended for the bulk lookup query we wrote
-        @Index(name = "idx_attendance_date_cohort", columnList = "attendance_recorded_date, cohort_id")
-})
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "attendance",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_attendance_session_student", columnNames = {"session_id", "student_id"}),
+        indexes = @Index(name = "idx_attendance_date_cohort", columnList = "attendance_recorded_date, cohort_id"))
 @Getter
 @Setter
 @Builder
@@ -33,22 +29,29 @@ public class Attendance {
     private UUID attendanceId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "session_id", nullable = false)
+    private AttendanceSession session;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
+    // program, cohort and date duplicate the session's values so history and
+    // scoring queries don't need a join; they are always copied from the session.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "program_id", nullable = false)
     private Program program;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "attendance_status", nullable = false)
     private AttendanceStatus attendanceStatus;
 
-    @Column(name = "check_in_time", nullable = false)
+    // Null for absences.
+    @Column(name = "check_in_time")
     private LocalTime checkInTime;
 
     @Column(name = "remarks")
@@ -57,20 +60,17 @@ public class Attendance {
     @Column(name = "attendance_recorded_date", nullable = false)
     private LocalDate attendanceRecordedDate;
 
-    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-
-    @Column(name = "recorded_by_id", nullable = false, updatable = false)
+    // Whoever saved this row last (taken from the JWT, never from the request body).
+    @Column(name = "recorded_by_id", nullable = false)
     private UUID recordedById;
 
-
-    @Column(name = "recorded_by_name", nullable = false, updatable = false)
+    @Column(name = "recorded_by_name", nullable = false)
     private String recordedByName;
 
     @PrePersist
