@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS attendance_alert CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS attendance_session CASCADE;
 DROP TABLE IF EXISTS participant CASCADE;
+DROP TABLE IF EXISTS student_profile CASCADE;
 DROP TABLE IF EXISTS student CASCADE;
 DROP TABLE IF EXISTS cohort CASCADE;
 DROP TABLE IF EXISTS program CASCADE;
@@ -68,6 +69,58 @@ CREATE TABLE student (
                              FOREIGN KEY (program_id)
                                  REFERENCES program (program_id)
     -- fk_student_user is added after app_user is created (see below)
+);
+
+-- ==========================================
+-- 4b. STUDENT PROFILE (1:1 with student; filled by the student after activation)
+-- ==========================================
+CREATE TABLE student_profile (
+                         profile_id UUID PRIMARY KEY,
+                         student_id UUID NOT NULL UNIQUE,
+
+                         date_of_birth DATE NOT NULL,
+                         gender VARCHAR(20) NOT NULL,
+                         nationality VARCHAR(255) NOT NULL,
+                         refugee BOOLEAN NOT NULL DEFAULT FALSE,
+
+                         has_disability BOOLEAN NOT NULL DEFAULT FALSE,
+                         disability_type VARCHAR(50),
+                         disability_details VARCHAR(2000),
+
+                         province VARCHAR(255) NOT NULL,
+                         district VARCHAR(255) NOT NULL,
+                         sector VARCHAR(255) NOT NULL,
+                         cell VARCHAR(255) NOT NULL,
+                         village VARCHAR(255) NOT NULL,
+
+                         emergency_contact_name VARCHAR(255) NOT NULL,
+                         emergency_contact_relationship VARCHAR(255) NOT NULL,
+                         emergency_contact_phone VARCHAR(255) NOT NULL,
+
+                         has_young_child BOOLEAN NOT NULL DEFAULT FALSE,
+                         has_childcare_support BOOLEAN NOT NULL DEFAULT FALSE,
+                         has_laptop BOOLEAN NOT NULL DEFAULT FALSE,
+
+                         occupation VARCHAR(60) NOT NULL,
+                         education_level VARCHAR(30) NOT NULL,
+                         institution VARCHAR(255),
+                         academic_background VARCHAR(2000) NOT NULL,
+                         english_proficiency VARCHAR(20) NOT NULL,
+                         strongest_english_skill VARCHAR(20) NOT NULL,
+
+                         linkedin_url VARCHAR(500),
+                         github_url VARCHAR(500),
+                         referral_source VARCHAR(40) NOT NULL,
+                         referral_source_details VARCHAR(255),
+                         motivation VARCHAR(4000) NOT NULL,
+                         additional_feedback VARCHAR(4000),
+
+                         completed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                         updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+
+                         CONSTRAINT fk_student_profile_student
+                             FOREIGN KEY (student_id)
+                                 REFERENCES student (student_id)
 );
 
 -- ==========================================

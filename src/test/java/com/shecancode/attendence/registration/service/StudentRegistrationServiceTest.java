@@ -5,6 +5,7 @@ import com.shecancode.attendence.auth.model.AppUser;
 import com.shecancode.attendence.auth.model.Role;
 import com.shecancode.attendence.auth.repository.UserRepository;
 import com.shecancode.attendence.auth.service.ActivationService;
+import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Exception.CohortNotFoundException;
 import com.shecancode.attendence.registration.Exception.CohortProgramMismatchException;
 import com.shecancode.attendence.registration.Exception.EmailAlreadyExistException;
@@ -12,10 +13,13 @@ import com.shecancode.attendence.registration.Exception.ProgramNotFoundException
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.Model.StudentProfile;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
+import com.shecancode.attendence.registration.Repository.StudentProfileRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.dao.AdminCreateStudentRequest;
+import com.shecancode.attendence.registration.dao.CompleteProfileRequest;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +54,10 @@ class StudentRegistrationServiceTest {
     private UserRepository userRepository;
     @Mock
     private ActivationService activationService;
+    @Mock
+    private StudentProfileRepository profileRepository;
+    @Mock
+    private StudentProfileService profileService;
 
     private final UUID programId = UUID.randomUUID();
     private final UUID cohortId = UUID.randomUUID();
@@ -143,5 +151,37 @@ class StudentRegistrationServiceTest {
         assertThrows(CohortProgramMismatchException.class,
                 () -> registrationService.createStudentAccount(validRequest));
         verify(activationService, never()).sendStudentInvitation(any(), any());
+    }
+
+    @Test
+    void completeProfile_firstTime_activatesStudentAndAccount() {
+        AppUser user = AppUser.builder().username("joseph@gmail.com").accountStatus(AccountStatus.PROFILE_INCOMPLETE).build();
+        Student student = Student.builder().id(UUID.randomUUID()).email("joseph@gmail.com")
+                .status(Status.PENDING).user(user).cohort(cohort).program(program).build();
+        CompleteProfileRequest request = new CompleteProfileRequest();
+        when(studentRepository.findByEmail("joseph@gmail.com")).thenReturn(Optional.of(student));
+        when(profileService.save(student, request)).thenReturn(new StudentProfile());
+        when(studentRepository.save(any(Student.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        StudentResponseDao response = registrationService.completeProfile("joseph@gmail.com", request);
+
+        assertEquals(Status.ACTIVE, response.getStatus());
+        assertEquals(AccountStatus.PROFILE_COMPLETE, user.getAccountStatus());
+        assertNotNull(response.getProfile());
+    }
+
+    @Test
+    @DisplayName("Editing the profile later does not reactivate a dropped-out student")
+    void completeProfile_edit_keepsEnrolmentStatus() {
+        Student student = Student.builder().id(UUID.randomUUID()).email("joseph@gmail.com")
+                .status(Status.DROPPED_OUT).cohort(cohort).program(program).build();
+        CompleteProfileRequest request = new CompleteProfileRequest();
+        when(studentRepository.findByEmail("joseph@gmail.com")).thenReturn(Optional.of(student));
+        when(profileService.save(student, request)).thenReturn(new StudentProfile());
+        when(studentRepository.save(any(Student.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        StudentResponseDao response = registrationService.completeProfile("joseph@gmail.com", request);
+
+        assertEquals(Status.DROPPED_OUT, response.getStatus());
     }
 }

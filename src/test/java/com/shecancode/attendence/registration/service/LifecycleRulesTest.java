@@ -13,6 +13,7 @@ import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
+import com.shecancode.attendence.registration.Repository.StudentProfileRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.dao.CohortProgressResponse;
 import com.shecancode.attendence.registration.dao.CohortRequestDao;
@@ -43,6 +44,8 @@ class LifecycleRulesTest {
     @Mock private StudentRepository studentRepository;
     @Mock private UserRepository userRepository;
     @Mock private AttendanceRepository attendanceRepository;
+    @Mock private StudentProfileRepository profileRepository;
+    @Mock private StudentProfileService profileService;
 
     private ProgramService programService;
     private CohortService cohortService;
@@ -56,7 +59,8 @@ class LifecycleRulesTest {
         Clock clock = Clock.fixed(Instant.parse("2026-03-10T08:00:00Z"), ZoneOffset.UTC);
         programService = new ProgramService(programRepository, cohortRepository, studentRepository);
         cohortService = new CohortService(cohortRepository, programRepository, studentRepository, clock);
-        studentService = new StudentLifeCycleService(studentRepository, userRepository, attendanceRepository);
+        studentService = new StudentLifeCycleService(studentRepository, userRepository, attendanceRepository,
+                profileRepository, profileService);
 
         program = Program.builder().id(UUID.randomUUID()).programName("Backend").build();
         cohort = Cohort.builder().id(UUID.randomUUID()).cohortNumber("C1").program(program)
