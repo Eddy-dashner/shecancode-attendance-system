@@ -1,5 +1,6 @@
 package com.shecancode.attendence.registration.dao;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.shecancode.attendence.registration.Enum.Status;
 import lombok.Builder;
 import lombok.Data;
@@ -40,4 +41,8 @@ public class StudentResponseDao {
     private UUID cohortId;
 
     private UUID programId;
+
+    // Only filled on single-student views (my profile, student detail); omitted in lists.
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private StudentProfileResponse profile;
 }
