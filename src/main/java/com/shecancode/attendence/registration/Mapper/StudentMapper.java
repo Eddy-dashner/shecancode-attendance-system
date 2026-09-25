@@ -4,6 +4,8 @@ import com.shecancode.attendence.registration.Enum.Status;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.Model.StudentProfile;
+import com.shecancode.attendence.registration.dao.StudentProfileResponse;
 import com.shecancode.attendence.registration.dao.StudentRequestDao;
 import com.shecancode.attendence.registration.dao.StudentResponseDao;
 
@@ -35,6 +37,53 @@ public class StudentMapper {
                         : 0)
                 .cohortId(cohort != null ? cohort.getId() : null)
                 .programId(program != null ? program.getId() : null)
+                .build();
+    }
+
+    /** Student plus their onboarding profile (profile may be null if not completed yet). */
+    public static StudentResponseDao toDTO(Student student, StudentProfile profile) {
+        StudentResponseDao dto = toDTO(student);
+        if (dto != null) {
+            dto.setProfile(toProfileDTO(profile));
+        }
+        return dto;
+    }
+
+    public static StudentProfileResponse toProfileDTO(StudentProfile p) {
+        if (p == null) return null;
+        return StudentProfileResponse.builder()
+                .dateOfBirth(p.getDateOfBirth())
+                .gender(p.getGender())
+                .nationality(p.getNationality())
+                .refugee(p.isRefugee())
+                .hasDisability(p.isHasDisability())
+                .disabilityType(p.getDisabilityType())
+                .disabilityDetails(p.getDisabilityDetails())
+                .province(p.getProvince())
+                .district(p.getDistrict())
+                .sector(p.getSector())
+                .cell(p.getCell())
+                .village(p.getVillage())
+                .emergencyContactName(p.getEmergencyContactName())
+                .emergencyContactRelationship(p.getEmergencyContactRelationship())
+                .emergencyContactPhone(p.getEmergencyContactPhone())
+                .hasYoungChild(p.isHasYoungChild())
+                .hasChildcareSupport(p.isHasChildcareSupport())
+                .hasLaptop(p.isHasLaptop())
+                .occupation(p.getOccupation())
+                .educationLevel(p.getEducationLevel())
+                .institution(p.getInstitution())
+                .academicBackground(p.getAcademicBackground())
+                .englishProficiency(p.getEnglishProficiency())
+                .strongestEnglishSkill(p.getStrongestEnglishSkill())
+                .linkedinUrl(p.getLinkedinUrl())
+                .githubUrl(p.getGithubUrl())
+                .referralSource(p.getReferralSource())
+                .referralSourceDetails(p.getReferralSourceDetails())
+                .motivation(p.getMotivation())
+                .additionalFeedback(p.getAdditionalFeedback())
+                .completedAt(p.getCompletedAt())
+                .updatedAt(p.getUpdatedAt())
                 .build();
     }
 
