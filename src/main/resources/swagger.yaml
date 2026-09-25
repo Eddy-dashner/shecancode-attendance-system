@@ -1559,23 +1559,64 @@ components:
 
     CompleteProfileRequest:
       type: object
-      required: [studentFirstName, studentLastName, phoneNumber]
+      description: >
+        Student onboarding form (mirrors the application portal). Also used by the admin
+        update. Conditional rules: disabilityType + disabilityDetails are required when
+        hasDisability is true; institution is required for YEAR_1..4_UNIVERSITY,
+        FINAL_YEAR_UNIVERSITY, BACHELORS, MASTERS, PHD. Conditional answers are cleared
+        when their trigger is off.
+      required: [studentFirstName, studentLastName, dateOfBirth, gender, phoneNumber, nationality,
+                 province, district, sector, cell, village,
+                 emergencyContactName, emergencyContactRelationship, emergencyContactPhone,
+                 occupation, educationLevel, academicBackground, englishProficiency,
+                 strongestEnglishSkill, referralSource, motivation]
       properties:
-        studentFirstName:
+        studentFirstName: { type: string, minLength: 2, maxLength: 50, example: "Aline" }
+        studentLastName: { type: string, minLength: 2, maxLength: 50, example: "Keza" }
+        dateOfBirth: { type: string, format: date, example: "2001-05-14" }
+        gender: { type: string, enum: [MALE, FEMALE] }
+        phoneNumber: { type: string, pattern: "^[0-9]{10}$", example: "0780000001" }
+        nationality: { type: string, minLength: 2, example: "Rwandan" }
+        refugee: { type: boolean, default: false }
+        hasDisability: { type: boolean, default: false }
+        disabilityType:
           type: string
-          example: "Aline"
-        studentLastName:
+          enum: [PHYSICAL_IMPAIRMENT, VISUAL_IMPAIRMENT, HEARING_IMPAIRMENT, MENTAL_IMPAIRMENT,
+                 SHORT_STATURE, ALBINISM, DEAF_BLIND, AUTISM, MULTIPLE_DISABILITIES]
+        disabilityDetails: { type: string, maxLength: 2000 }
+        province: { type: string, minLength: 2, example: "Kigali City" }
+        district: { type: string, minLength: 2, example: "Gasabo" }
+        sector: { type: string, minLength: 2, example: "Kimironko" }
+        cell: { type: string, minLength: 2, example: "Bibare" }
+        village: { type: string, minLength: 2, example: "Ineza" }
+        emergencyContactName: { type: string, minLength: 2, example: "Jean Mugabo" }
+        emergencyContactRelationship: { type: string, minLength: 2, example: "Parent" }
+        emergencyContactPhone: { type: string, pattern: "^\\+?[0-9]{10,15}$", example: "0788000000" }
+        hasYoungChild: { type: boolean, default: false }
+        hasChildcareSupport: { type: boolean, default: false, description: "Only kept when hasYoungChild is true" }
+        hasLaptop: { type: boolean, default: false }
+        occupation:
           type: string
-          example: "Keza"
-        phoneNumber:
+          enum: [EMPLOYED, ATTENDING_UNIVERSITY_NOT_EMPLOYED, EMPLOYED_ATTENDING_UNIVERSITY,
+                 ATTENDING_ADVANCED_TRAINING_AND_UNIVERSITY,
+                 NOT_EMPLOYED_NOT_IN_SCHOOL_NOT_IN_ANY_TRAINING, INTERNSHIP]
+        educationLevel:
           type: string
-          example: "+250780000001"
-        homeAddress:
+          enum: [HIGH_SCHOOL, TECHNICAL_SCHOOL, YEAR_1_UNIVERSITY, YEAR_2_UNIVERSITY, YEAR_3_UNIVERSITY,
+                 YEAR_4_UNIVERSITY, FINAL_YEAR_UNIVERSITY, BACHELORS, MASTERS, PHD, OTHER]
+        institution: { type: string, example: "University of Rwanda" }
+        academicBackground: { type: string, minLength: 2 }
+        englishProficiency: { type: string, enum: [BEGINNER, INTERMEDIATE, ADVANCED, FLUENT, NATIVE] }
+        strongestEnglishSkill: { type: string, enum: [READING, WRITING, SPEAKING, LISTENING] }
+        linkedinUrl: { type: string, format: uri, description: "Valid URL or empty" }
+        githubUrl: { type: string, format: uri, description: "Valid URL or empty" }
+        referralSource:
           type: string
-          example: "Kigali, Gasabo"
-        currentOccupation:
-          type: string
-          example: "Student"
+          enum: [SOCIAL_MEDIA, SHE_CAN_CODE_AMBASSADOR, FRIENDS, ALUMNI, WEBSITE, SCHOOL,
+                 NEWSPAPER, RADIO, TV, EVENT, OTHER]
+        referralSourceDetails: { type: string, maxLength: 255, description: "Optional" }
+        motivation: { type: string, minLength: 50, maxLength: 4000 }
+        additionalFeedback: { type: string, maxLength: 4000 }
 
     StudentResponseDao:
       type: object
@@ -1595,6 +1636,9 @@ components:
         cohortNumber: { type: string }
         cohortId: { type: string, format: uuid }
         programId: { type: string, format: uuid }
+        profile:
+          description: Onboarding profile (same fields as CompleteProfileRequest plus completedAt/updatedAt). Only on single-student views, and absent until completed.
+          type: object
 
     StudentStatusRequest:
       type: object
