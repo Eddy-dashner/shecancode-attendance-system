@@ -13,6 +13,8 @@ import com.shecancode.attendence.registration.Exception.StudentDroppedOutExcepti
 import com.shecancode.attendence.registration.Exception.StudentNotFoundException;
 import com.shecancode.attendence.registration.Mapper.StudentMapper;
 import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.Model.StudentProfile;
+import com.shecancode.attendence.registration.Repository.StudentProfileRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.Repository.StudentSpecs;
 import com.shecancode.attendence.registration.dao.CompleteProfileRequest;
@@ -57,12 +59,18 @@ public class StudentLifeCycleService {
     private final StudentRepository repository;
     private final UserRepository userRepository;
     private final AttendanceRepository attendanceRepository;
+    private final StudentProfileRepository profileRepository;
+    private final StudentProfileService profileService;
 
     public StudentLifeCycleService(StudentRepository repository, UserRepository userRepository,
-                                   AttendanceRepository attendanceRepository) {
+                                   AttendanceRepository attendanceRepository,
+                                   StudentProfileRepository profileRepository,
+                                   StudentProfileService profileService) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.attendanceRepository = attendanceRepository;
+        this.profileRepository = profileRepository;
+        this.profileService = profileService;
     }
 
     /** All filters are optional; results are ordered by name. */
@@ -83,7 +91,8 @@ public class StudentLifeCycleService {
         List<Attendance> history = student.getProgram() == null ? List.of()
                 : attendanceRepository.findHistory(studentId, student.getProgram().getId());
         AttendanceScore score = AttendanceScore.of(history.stream().map(Attendance::getAttendanceStatus).toList());
-        return new StudentDetailResponse(StudentMapper.toDTO(student), AttendanceSummaryDto.of(score));
+        StudentProfile profile = profileRepository.findByStudent_Id(studentId).orElse(null);
+        return new StudentDetailResponse(StudentMapper.toDTO(student, profile), AttendanceSummaryDto.of(score));
     }
 
     @Transactional
@@ -113,19 +122,9 @@ public class StudentLifeCycleService {
     public StudentResponseDao updateStudent(UUID studentId, CompleteProfileRequest request) {
         Student student = findStudent(studentId);
         requireWritable(student);
-        student.setStudentFirstName(request.getStudentFirstName());
-        student.setStudentLastName(request.getStudentLastName());
-        student.setPhoneNumber(request.getPhoneNumber());
-        student.setHomeAddress(request.getHomeAddress());
-        student.setCurrentOccupation(request.getCurrentOccupation());
-
-        AppUser user = student.getUser();
-        if (user != null) {
-            user.setFullName(student.getFullName());
-            userRepository.save(user);
-        }
+        StudentProfile profile = profileService.save(student, request);
         log.info("Student {} updated by admin", studentId);
-        return StudentMapper.toDTO(repository.save(student));
+        return StudentMapper.toDTO(repository.save(student), profile);
     }
 
     /** Soft delete: hidden everywhere, attendance history kept, login disabled. */

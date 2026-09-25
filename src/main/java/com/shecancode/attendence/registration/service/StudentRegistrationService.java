@@ -17,8 +17,10 @@ import com.shecancode.attendence.registration.Mapper.StudentMapper;
 import com.shecancode.attendence.registration.Model.Cohort;
 import com.shecancode.attendence.registration.Model.Program;
 import com.shecancode.attendence.registration.Model.Student;
+import com.shecancode.attendence.registration.Model.StudentProfile;
 import com.shecancode.attendence.registration.Repository.CohortRepository;
 import com.shecancode.attendence.registration.Repository.ProgramRepository;
+import com.shecancode.attendence.registration.Repository.StudentProfileRepository;
 import com.shecancode.attendence.registration.Repository.StudentRepository;
 import com.shecancode.attendence.registration.dao.AdminCreateStudentRequest;
 import com.shecancode.attendence.registration.dao.CompleteProfileRequest;
@@ -41,6 +43,8 @@ public class StudentRegistrationService {
     private final ProgramRepository programsRepository;
     private final UserRepository userRepository;
     private final ActivationService activationService;
+    private final StudentProfileRepository profileRepository;
+    private final StudentProfileService profileService;
 
     /**
      * Admin enrolment: creates a disabled login account (username = email, role STUDENT,
@@ -111,39 +115,36 @@ public class StudentRegistrationService {
     }
 
     /**
-     * Student self-service: fills in the remaining profile fields after activation and
-     * moves the record from PENDING to ACTIVE and the account to PROFILE_COMPLETE.
+     * Student self-service: fills in (or later updates) the onboarding profile. The first
+     * completion moves the record from PENDING to ACTIVE and the account to PROFILE_COMPLETE;
+     * later edits leave the enrolment status alone (so a dropped-out student stays dropped out).
      */
     @Transactional
     public StudentResponseDao completeProfile(String email, CompleteProfileRequest request) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new StudentNotFoundException("No student found for [" + LoggingUtils.sanitizeForLogging(email) + "]."));
 
-        student.setStudentFirstName(request.getStudentFirstName());
-        student.setStudentLastName(request.getStudentLastName());
-        student.setPhoneNumber(request.getPhoneNumber());
-        student.setHomeAddress(request.getHomeAddress());
-        student.setCurrentOccupation(request.getCurrentOccupation());
-        student.setStatus(Status.ACTIVE);
+        StudentProfile profile = profileService.save(student, request);
+        if (student.getStatus() == Status.PENDING) {
+            student.setStatus(Status.ACTIVE);
+        }
 
-        // Keep the login account's display name in sync and mark onboarding complete.
+        // Mark onboarding complete on the login account.
         AppUser user = student.getUser();
         if (user != null) {
-            user.setFullName(student.getFullName());
             user.setAccountStatus(AccountStatus.PROFILE_COMPLETE);
             userRepository.save(user);
         }
 
-        Student savedStudent = studentRepository.save(student);
-        log.info("Student [{}] completed their profile", LoggingUtils.sanitizeForLogging(email));
-
-        return StudentMapper.toDTO(savedStudent);
+        log.info("Student [{}] saved their profile", LoggingUtils.sanitizeForLogging(email));
+        return StudentMapper.toDTO(studentRepository.save(student), profile);
     }
 
+    @Transactional(readOnly = true)
     public StudentResponseDao getMyProfile(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new StudentNotFoundException("No student found for [" + LoggingUtils.sanitizeForLogging(email) + "]."));
-        return StudentMapper.toDTO(student);
+        return StudentMapper.toDTO(student, profileRepository.findByStudent_Id(student.getId()).orElse(null));
     }
 
     private boolean isValidEmail(String email) {
