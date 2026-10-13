@@ -88,6 +88,9 @@ services:
       BREVO_API_KEY: ${BREVO_API_KEY:?set BREVO_API_KEY in a local .env file (gitignored), not here}
       MAIL_FROM: ${MAIL_FROM:-no-reply@igirerwanda.org}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-SheCanCODE}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:?set CLOUDINARY_CLOUD_NAME in a local .env file (gitignored)}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:?set CLOUDINARY_API_KEY in a local .env file (gitignored)}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:?set CLOUDINARY_API_SECRET in a local .env file (gitignored), not here}
 
       SPRING_KAFKA_BOOTSTRAP_SERVERS: shecancode-kafka:29092
     networks:

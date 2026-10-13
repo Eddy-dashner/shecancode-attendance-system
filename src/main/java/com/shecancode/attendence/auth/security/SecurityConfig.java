@@ -188,6 +188,9 @@ private final JwtAuthenticationFilter jwtAuthFilter;
 
                         .requestMatchers("/api/v1/programs/**").hasRole("ADMIN")
 
+                        // Every role manages its own bio/profile picture; must precede the
+                        // ADMIN-only "/users/**" rule below (first match wins).
+                        .requestMatchers("/api/v1/users/me", "/api/v1/users/me/**").authenticated()
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
