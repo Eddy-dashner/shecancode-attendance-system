@@ -21,6 +21,12 @@ spring:
     init:
       mode: always
 
+  servlet:
+    multipart:
+      # Profile pictures; ProfilePictureService enforces its own (equal) limit.
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -53,6 +59,12 @@ app:
     from-address: ${MAIL_FROM:no-reply@igirerwanda.org}
     from-name: ${MAIL_FROM_NAME:SheCanCODE}
     brevo-api-key: ${BREVO_API_KEY:}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+    # Folder profile pictures are uploaded into (public_id = <folder>/<userId>).
+    profile-picture-folder: ${CLOUDINARY_PROFILE_FOLDER:shecancode/profile-pictures}
   attendance:
     # Timezone used to decide what "today" is for attendance.
     timezone: ${ATTENDANCE_TIMEZONE:Africa/Kigali}

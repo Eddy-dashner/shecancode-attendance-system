@@ -11,6 +11,8 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.time.LocalDateTime;
@@ -162,6 +164,40 @@ public class GlobalExceptionHandler {
                 "We could not send the email at this time. Please try again later.",
                 StringEscapeUtils.escapeHtml4(request.getRequestURI()));
         return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+    }
+
+    // Never leak image-provider internals to the client.
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ErrorResponse> handleImageUpload(ImageUploadException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_GATEWAY.value(),
+                "Image Upload Failed",
+                "We could not store the image at this time. Please try again later.",
+                StringEscapeUtils.escapeHtml4(request.getRequestURI()));
+        return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.PAYLOAD_TOO_LARGE.value(),
+                "Payload Too Large",
+                "Uploaded file is too large. The maximum size is 5 MB.",
+                StringEscapeUtils.escapeHtml4(request.getRequestURI()));
+        return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Missing multipart part: " + StringEscapeUtils.escapeHtml4(ex.getRequestPartName()),
+                StringEscapeUtils.escapeHtml4(request.getRequestURI()));
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

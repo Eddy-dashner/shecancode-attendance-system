@@ -253,7 +253,10 @@ CREATE TABLE app_user (
                           full_name VARCHAR(255),
                           role VARCHAR(50) NOT NULL,
                           enabled BOOLEAN NOT NULL DEFAULT TRUE,
-                          account_status VARCHAR(50)
+                          account_status VARCHAR(50),
+                          bio VARCHAR(500),
+                          profile_picture_url VARCHAR(1000),
+                          profile_picture_public_id VARCHAR(255)
 );
 
 -- Deferred FK: student.user_id -> app_user (app_user is created after student above)

@@ -49,6 +49,17 @@ public class AppUser implements UserDetails {
     @Builder.Default
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
+    @Column(name = "bio", length = 500)
+    private String bio;
+
+    // Cloudinary secure URL, served to clients as-is.
+    @Column(name = "profile_picture_url", length = 1000)
+    private String profilePictureUrl;
+
+    // Cloudinary public_id, kept so the image can be replaced or deleted.
+    @Column(name = "profile_picture_public_id")
+    private String profilePicturePublicId;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
