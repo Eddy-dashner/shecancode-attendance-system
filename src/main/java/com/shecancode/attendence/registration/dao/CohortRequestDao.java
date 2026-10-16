@@ -29,4 +29,8 @@ public class CohortRequestDao {
 
     @Schema(example = "2026-09-01")
     private LocalDate endDate;
+
+    @Schema(example = "true", description = "Whether students of this cohort are eligible for a stipend. "
+            + "Required when creating a cohort; on update, omit it to keep the current value.")
+    private Boolean stipendEligible;
 }

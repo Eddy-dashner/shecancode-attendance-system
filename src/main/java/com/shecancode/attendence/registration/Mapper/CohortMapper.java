@@ -20,6 +20,7 @@ public class CohortMapper {
                 .programId(program != null ? program.getId() : null)
                 .programName(program != null ? program.getProgramName() : null)
                 .status(cohort.getStatus())
+                .stipendEligible(cohort.isStipendEligible())
                 .readOnly(cohort.isReadOnly())
                 .build();
     }
@@ -31,6 +32,7 @@ public class CohortMapper {
                 .cohortNumber(requestDao.getCohortNumber())
                 .startDate(requestDao.getStartDate())
                 .endDate(requestDao.getEndDate())
+                .stipendEligible(Boolean.TRUE.equals(requestDao.getStipendEligible()))
                 .build();
     }
 }

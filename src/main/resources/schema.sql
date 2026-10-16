@@ -35,6 +35,7 @@ CREATE TABLE cohort (
                         end_date DATE NOT NULL,
                         program_id UUID NOT NULL,
                         status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+                        stipend_eligible BOOLEAN NOT NULL DEFAULT FALSE,
                         deleted_at TIMESTAMP WITH TIME ZONE,
 
                         CONSTRAINT fk_cohort_program
