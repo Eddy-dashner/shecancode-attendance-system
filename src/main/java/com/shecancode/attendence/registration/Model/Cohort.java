@@ -44,6 +44,10 @@ public class Cohort {
     @Builder.Default
     private LifecycleStatus status = LifecycleStatus.OPEN;
 
+    // Decided by the admin when the cohort is created: whether its students can receive a stipend.
+    @Column(name = "stipend_eligible", nullable = false)
+    private boolean stipendEligible;
+
     // Soft delete: set when an admin deletes the cohort; null while it exists.
     @Column(name = "deleted_at")
     private Instant deletedAt;

@@ -73,6 +73,10 @@ public class CohortService {
             throw new CohortAlreadyExistException("Cohort " + LoggingUtils.sanitizeForLogging(cohortRequestDao.getCohortNumber()) + " already exists in program " + LoggingUtils.sanitizeForLogging(program.getProgramName()));
         }
 
+        if (cohortRequestDao.getStipendEligible() == null) {
+            throw new IllegalArgumentException("stipendEligible is required: decide whether this cohort is eligible for a stipend");
+        }
+
         validateDates(cohortRequestDao);
         Cohort cohort = Cohort.builder()
                 .id(UUID.randomUUID())
@@ -80,6 +84,7 @@ public class CohortService {
                 .startDate(cohortRequestDao.getStartDate())
                 .endDate(cohortRequestDao.getEndDate())
                 .program(program)
+                .stipendEligible(cohortRequestDao.getStipendEligible())
                 .build();
 
         Cohort savedCohort = cohortRepository.save(cohort);
@@ -107,7 +112,7 @@ public class CohortService {
         return CohortMapper.toCohortResponseDao(findCohort(cohortId));
     }
 
-    /** Updates number and dates. The program cannot be changed. */
+    /** Updates number, dates and stipend eligibility (kept when omitted). The program cannot be changed. */
     public CohortResponseDao updateCohort(UUID cohortId, CohortRequestDao request) {
         Cohort cohort = findCohort(cohortId);
         requireWritable(cohort);
@@ -124,6 +129,9 @@ public class CohortService {
         cohort.setCohortNumber(request.getCohortNumber());
         cohort.setStartDate(request.getStartDate());
         cohort.setEndDate(request.getEndDate());
+        if (request.getStipendEligible() != null) {
+            cohort.setStipendEligible(request.getStipendEligible());
+        }
         log.info("Cohort [{}] updated", cohortId);
         return CohortMapper.toCohortResponseDao(cohortRepository.save(cohort));
     }
