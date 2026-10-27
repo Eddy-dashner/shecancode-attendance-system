@@ -43,3 +43,6 @@ application-secret*.properties
 
 ### VS Code ###
 .vscode/
+
+### Local scratch output ###
+.tmp/
