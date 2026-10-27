@@ -49,6 +49,7 @@ class CohortServiceTest {
                 .programId(programId)
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now())
+                .stipendEligible(true)
                 .build();
 
     }
@@ -65,6 +66,7 @@ class CohortServiceTest {
         assertNotNull(savedCohort);
         assertEquals("C10", savedCohort.getCohortNumber());
         assertEquals("Backend", savedCohort.getProgramName());
+        assertTrue(savedCohort.isStipendEligible());
         verify(cohortRepository).existsByProgram_IdAndCohortNumber(programId, "C10");
         verify(cohortRepository, times(1)).save(any(Cohort.class));
     }
@@ -82,6 +84,16 @@ class CohortServiceTest {
         when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.empty());
 
         assertThrows(ProgramNotFoundException.class, () -> cohortService.createCohort(cohortRequestToTest));
+        verify(cohortRepository, never()).save(any(Cohort.class));
+    }
+
+    @Test
+    void givenNoStipendDecision_whenCreateCohort_thenRejected(){
+        cohortRequestToTest.setStipendEligible(null);
+        when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+        when(cohortRepository.existsByProgram_IdAndCohortNumber(programId, "C10")).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class, () -> cohortService.createCohort(cohortRequestToTest));
         verify(cohortRepository, never()).save(any(Cohort.class));
     }
 

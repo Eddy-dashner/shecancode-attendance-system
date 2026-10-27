@@ -21,6 +21,7 @@ public class CohortResponseDao {
     private UUID programId;
     private String programName;
     private LifecycleStatus status;
+    private boolean stipendEligible;
     // True when the cohort or its program is closed.
     private boolean readOnly;
 }

@@ -139,6 +139,13 @@
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 
+		<!-- Cloudinary: stores user profile pictures -->
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http5</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+
 		<!-- Loads a .env file (project root) into the Spring Environment, so
 		     mvnw/IDE runs pick up the same variables as docker-compose. -->
 		<dependency>

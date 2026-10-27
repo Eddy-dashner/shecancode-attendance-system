@@ -37,7 +37,7 @@ public record AttendanceScore(
                 case ABSENT -> absent++;
                 case ABSENT_COMMUNICATED -> communicated++;
                 case LATE_PRESENT -> late++;
-                case PRESENT -> { }
+                case PRESENT -> {}
             }
             if (streakOpen && status.isAbsence()) {
                 streak++;

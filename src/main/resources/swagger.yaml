@@ -1449,7 +1449,7 @@ components:
     # ─── Administration ───────────────────────────────────────────────────────
     CohortRequestDao:
       type: object
-      required: [cohortNumber, programId, startDate, endDate]
+      required: [cohortNumber, programId, startDate, endDate, stipendEligible]
       properties:
         cohortNumber:
           type: string
@@ -1464,6 +1464,9 @@ components:
         endDate:
           type: string
           format: date
+        stipendEligible:
+          type: boolean
+          description: Whether students of this cohort are eligible for a stipend. On update, omit it to keep the current value.
 
     CohortResponseDao:
       type: object
@@ -1475,6 +1478,7 @@ components:
         programId: { type: string, format: uuid }
         programName: { type: string }
         status: { $ref: '#/components/schemas/LifecycleStatus' }
+        stipendEligible: { type: boolean }
         readOnly:
           type: boolean
           description: True when the cohort or its program is closed
